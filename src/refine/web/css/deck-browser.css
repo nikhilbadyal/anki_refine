@@ -4,6 +4,7 @@
    own elements and must not out-rank their own display rules below). */
 
 html:not(.rf-s-deck_browser) .rf-hero,
+html:not(.rf-s-deck_browser) .rf-row-study,
 html:not(.rf-s-deck_browser) .rf-side,
 html.rf-s-deck_browser:not(.rf-h-hero) .rf-hero,
 html.rf-s-deck_browser:not(.rf-h-today) .rf-today,
@@ -151,6 +152,8 @@ html.refine.rf-s-deck_browser tr.deck td {
   vertical-align: middle;
 }
 html.refine.rf-s-deck_browser tr.deck[data-rf-depth]:not([data-rf-depth="0"]) td { border-top-color: transparent; height: 32px; }
+html.refine.rf-s-deck_browser.rf-compact tr.deck td { height: 30px; }
+html.refine.rf-s-deck_browser.rf-compact tr.deck[data-rf-depth]:not([data-rf-depth="0"]) td { height: 26px; }
 html.refine.rf-s-deck_browser tr.top-level-drag-row + tr.deck td { border-top-color: transparent; }
 html.refine.rf-s-deck_browser tr.deck:hover td { background: var(--rf-overlay); }
 html.refine.rf-s-deck_browser tr.deck.current td { background: var(--rf-accent-soft); }
