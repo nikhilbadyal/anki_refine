@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
-
-from aqt import gui_hooks
 
 from . import log as logmod
 from .config import ConfigStore
@@ -15,6 +14,7 @@ from .registry import Registry
 
 
 def setup(mw: Any, module: str, addon_dir: Path) -> Context:
+    started = time.perf_counter()
     logger = logmod.setup(addon_dir / "user_files" / "logs")
     am = mw.addonManager
     package = am.addonFromModule(module)
@@ -52,15 +52,24 @@ def setup(mw: Any, module: str, addon_dir: Path) -> Context:
     am.setConfigAction(module, guard.wrap("core", open_settings))
     am.setConfigUpdatedAction(module, guard.wrap("core", lambda _conf: store.reload()))
 
-    def on_main_window_did_init() -> None:
+    # Start now rather than at main_window_did_init: Anki loads add-ons
+    # before it first draws the toolbar (finish_ui_setup) and before the
+    # profile and deck list load, so the very first render is already styled
+    # and nothing has to be redrawn.
+    def start() -> None:
         registry.start()
         from .ui.menu import install_menu
 
         install_menu(ctx)
 
-    gui_hooks.main_window_did_init.append(guard.wrap("core", on_main_window_did_init))
+    guard.wrap("core", start)()
     store.subscribe(lambda cfg, changed: guard.wrap("core", registry.on_config)(cfg, changed))
-    logger.info("Refine %s loaded (package %s)", _version(addon_dir), package)
+    logger.info(
+        "Refine %s loaded (package %s) in %.1f ms",
+        _version(addon_dir),
+        package,
+        (time.perf_counter() - started) * 1000,
+    )
     return ctx
 
 

@@ -9,6 +9,7 @@ after render and filled in by refine.js.
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 from aqt import gui_hooks
@@ -110,7 +111,13 @@ class DeckBrowserSurface(WebSurface):
         def failed(err: Exception) -> None:
             ctx.log.error("home stats failed: %r", err)
 
-        QueryOp(parent=ctx.mw, op=home.collect, success=ctx.guard.wrap(self.id, done)).failure(
+        def timed(col: Any) -> home.HomeStats:
+            t0 = time.perf_counter()
+            stats = home.collect(col)
+            ctx.log.info("home stats in %.1f ms", (time.perf_counter() - t0) * 1000)
+            return stats
+
+        QueryOp(parent=ctx.mw, op=timed, success=ctx.guard.wrap(self.id, done)).failure(
             failed
         ).run_in_background()
 

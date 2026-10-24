@@ -61,11 +61,6 @@ class Registry:
             except Exception:
                 self.ctx.log.exception("surface %s failed to install", s.id)
                 self.skipped[s.id] = "install failed"
-        # The first render of the toolbar and deck browser can happen before
-        # main_window_did_init on some platforms; redraw once so they pick up
-        # our assets.
-        self.refresh_screens(toolbar=True)
-
     def active_surfaces(self) -> list[Surface]:
         return [s for s in self.surfaces if s.id not in self.skipped and not self.ctx.guard.is_disabled(s.id)]
 
