@@ -1,5 +1,7 @@
 # AnkiWeb listing
 
+Add-on code **1616260025**: <https://ankiweb.net/shared/info/1616260025>
+
 Everything needed for the upload form at <https://ankiweb.net/shared/upload> (log in first). Re-use it for later updates: open the add-on from <https://ankiweb.net/shared/mine>, choose Update, and upload the new file.
 
 ## File

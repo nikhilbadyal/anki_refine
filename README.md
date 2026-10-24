@@ -46,7 +46,7 @@ Refine is an add-on for Anki Desktop that gives the home screen, deck overview, 
 
 ## Install
 
-**From AnkiWeb:** in Anki, open **Tools ▸ Add-ons ▸ Get Add-ons…**, paste the add-on's code from its AnkiWeb page, and restart Anki.
+**From AnkiWeb** ([add-on page](https://ankiweb.net/shared/info/1616260025)): in Anki, open **Tools ▸ Add-ons ▸ Get Add-ons…**, enter the code **1616260025**, and restart Anki.
 
 **From GitHub:**
 1. Download `refine-<version>.ankiaddon` from the [latest release](https://github.com/shreyanshsinghks/anki_refine/releases/latest).
