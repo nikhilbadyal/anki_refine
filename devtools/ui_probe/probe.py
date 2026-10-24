@@ -152,6 +152,7 @@ class Probe:
                 (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
+        steps.append(("perf", self.step_perf))
         steps.append(("deck_click", self.step_deck_click))
         steps.append(("stats_inline", self.step_stats_inline))
         steps.append(("diagnostics", self.step_diagnostics))
@@ -660,6 +661,79 @@ class Probe:
             mw.moveToState("deckBrowser")
         else:
             start()
+
+    # Navigation timing: action -> page painted, Refine on vs off (same
+    # session), plus the resources each page load fetches.
+    def step_perf(self, nxt: Next) -> None:
+        mw = _mw()
+        out: dict[str, Any] = {"runs": []}
+        self.r["perf"] = out
+        if self.ctx is None:
+            nxt()
+            return
+        paint_js = ("new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(function(){r(1)})})})"
+                    ".then(function(){return 1})")
+        res_js = ("JSON.stringify((function(){var n=performance.getEntriesByType('navigation')[0]||{};"
+                  "var rs=performance.getEntriesByType('resource');"
+                  "return {dcl:Math.round(n.domContentLoadedEventEnd||0),load:Math.round(n.loadEventEnd||0),"
+                  "count:rs.length,total:Math.round(rs.reduce(function(a,e){return a+e.duration},0)),"
+                  "slow:rs.filter(function(e){return e.duration>15}).map(function(e){return e.name.split('/').slice(-2).join('/')+':'+Math.round(e.duration)})};})())")
+        plan = []
+        for mode in ("refine", "stock"):
+            for i in range(4):
+                plan.append((mode, "overview"))
+                plan.append((mode, "deckBrowser"))
+
+        def run(idx: int) -> None:
+            if idx >= len(plan):
+                self.ctx.config.set("enabled", True)
+                self.wait_for("deck_browser_did_render", nxt, 10_000)
+                mw.moveToState("deckBrowser")
+                return
+            mode, target = plan[idx]
+            want = mode == "refine"
+            if self.ctx.config.get().get("enabled") != want:
+                self.ctx.config.set("enabled", want)
+            hook = "overview_did_refresh" if target == "overview" else "deck_browser_did_render"
+            t0 = time.perf_counter()
+
+            def rendered() -> None:
+                t_render = time.perf_counter() - t0
+
+                def painted(_v: Any) -> None:
+                    t_paint = time.perf_counter() - t0
+
+                    def got(v: Any) -> None:
+                        out["runs"].append({"mode": mode, "to": target,
+                                            "render_ms": round(t_render * 1000), "paint_ms": round(t_paint * 1000),
+                                            "page": json.loads(v) if isinstance(v, str) else v})
+                        self.later(300, lambda: run(idx + 1))
+
+                    mw.web.evalWithCallback(res_js, got)
+
+                mw.web.evalWithCallback("1", painted)
+
+            # wait_for adds SETTLE_MS before calling back; record the hook time directly instead
+            done = {"v": False}
+
+            def on_hook(*_a: Any) -> None:
+                if not done["v"]:
+                    done["v"] = True
+                    getattr(gui_hooks, hook).remove(on_hook)
+                    rendered()
+
+            getattr(gui_hooks, hook).append(on_hook)
+            if target == "overview":
+                did = mw.col.decks.get_current_id()
+                mw.moveToState("overview")
+            else:
+                mw.moveToState("deckBrowser")
+
+        if mw.state != "deckBrowser":
+            self.wait_for("deck_browser_did_render", lambda: run(0), 10_000)
+            mw.moveToState("deckBrowser")
+        else:
+            run(0)
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()

@@ -19,6 +19,7 @@ The friendlier way to change these is **Tools ▸ Refine ▸ Settings…**. Edit
   - `today`: cards studied and time spent today.
   - `activity`: 26-week activity heatmap with your streak.
   - `forecast`: cards due over the next 7 days.
+- `motion`: `smooth` (default: gentle fades between screens and on hover) or `reduced`. Your system's reduced-motion setting always turns motion off.
 - `deck_click`: `select` (default: a click on a deck name selects it and stays on Home; double-click opens the overview) or `overview` (Anki's usual behaviour).
 - `daily_goal` (number, default 0): cards per day shown as progress in the Today panel. 0 means no goal.
 - `cards`: optional card-content polish, both off by default:

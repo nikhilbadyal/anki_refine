@@ -14,6 +14,7 @@ from typing import Any
 
 from aqt import gui_hooks
 
+from . import assets
 from .context import Context
 from .surfaces.base import Surface, WebSurface
 from .surfaces.cards import CardsSurface
@@ -58,6 +59,10 @@ class Registry:
         gui_hooks.webview_did_receive_js_message.append(
             g.wrap("core", self._on_js_message, is_filter=True)
         )
+        # the colour a webview paints while Anki rebuilds its page; without
+        # this every screen change flashes Anki's grey canvas
+        gui_hooks.state_will_change.append(g.wrap("core", lambda new, old: self.sync_backgrounds(new)))
+        gui_hooks.theme_did_change.append(g.wrap("core", lambda: self.sync_backgrounds()))
         for s in self.surfaces:
             missing = [h for h in s.requires_hooks if not hasattr(gui_hooks, h)]
             if missing:
@@ -84,6 +89,7 @@ class Registry:
             for k, v in s.flags(cfg).items():
                 out[k] = on and v
         out["rf-compact"] = on and cfg.get("density") == "compact"
+        out["rf-motion"] = on and cfg.get("motion", "smooth") == "smooth"
         return out
 
     def _on_set_content(self, web_content: Any, context: Any) -> None:
@@ -110,15 +116,12 @@ class Registry:
             f"d.dataset.rfState={json.dumps(state)};}})();</script>"
             + theme_css.style_tag(cfg["accent"], cfg["density"])
         )
-        web_content.head += head
-        web_content.css.append(f"{base}/css/fonts.css")
-        web_content.css.append(f"{base}/css/base.css")
+        files = ["fonts.css", "base.css"]
         for s in matched:
-            for f in s.css:
-                path = f"{base}/css/{f}"
-                if path not in web_content.css:
-                    web_content.css.append(path)
-        web_content.js.append(f"{base}/js/refine.js")
+            files += [f for f in s.css if f not in files]
+        # inlined: no extra requests to Anki's media server per page (assets.py)
+        web_dir = self.ctx.addon_dir / "web"
+        web_content.head += head + assets.css(web_dir, base, files) + assets.script(web_dir)
         for s in matched:
             self.ctx.guard.wrap(s.id, s.contribute)(self.ctx, web_content, context, cfg)
 
@@ -132,10 +135,9 @@ class Registry:
             "<script>(function(){var d=document.documentElement;d.dataset.rfScope='cards';"
             f"d.classList.add.apply(d.classList,{json.dumps(classes)});}})();</script>"
         )
-        for s in matched:
-            for f in s.css:
-                web_content.css.append(f"{self.ctx.web_base}/css/{f}")
-        web_content.js.append(f"{self.ctx.web_base}/js/refine.js")
+        web_dir = self.ctx.addon_dir / "web"
+        files = [f for s in matched for f in s.css]
+        web_content.head += assets.css(web_dir, self.ctx.web_base, files) + assets.script(web_dir)
 
     def _on_js_message(self, handled: tuple, message: Any, context: Any) -> tuple:
         if not isinstance(message, str) or not message.startswith(BRIDGE_PREFIX):
@@ -157,6 +159,28 @@ class Registry:
             if w is not None:
                 out.append(w)
         return out
+
+    def sync_backgrounds(self, state: str | None = None) -> None:
+        """Refine's background on Refine screens; Anki's canvas while
+        reviewing (the card area must look stock) or when Refine is off."""
+        from aqt.qt import QColor
+        from aqt.theme import theme_manager
+
+        from .theme.tokens import tokens
+
+        mw = self.ctx.mw
+        cfg = self.ctx.config.get()
+        state = state or getattr(mw, "state", "")
+        if cfg.get("enabled") and state != "review":
+            color = QColor(tokens(theme_manager.night_mode, cfg["accent"], cfg["density"])["bg"])
+        else:
+            from aqt import colors
+
+            color = theme_manager.qcolor(colors.CANVAS)
+        for w in self.webviews():
+            page = w.page()
+            if page is not None:
+                page.setBackgroundColor(color)
 
     def push_live(self, cfg: dict[str, Any]) -> None:
         payload = json.dumps(
@@ -192,6 +216,7 @@ class Registry:
         if any(p.startswith("home.") or p == "daily_goal" for p in changed):
             self.refresh_screens()
         self.push_live(cfg)
+        self.sync_backgrounds()
         for s in self.active_surfaces():
             self.ctx.guard.wrap(s.id, s.on_config)(self.ctx, cfg, changed)
 

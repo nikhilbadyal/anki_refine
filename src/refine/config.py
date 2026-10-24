@@ -19,6 +19,8 @@ CARD_IDS = ("japanese", "furigana_hover")
 MAX_DAILY_GOAL = 5000
 # what a click on a deck name in the home screen does
 DECK_CLICK = ("select", "overview")
+# Refine's own motion setting (Anki's "Reduce motion" is on by default)
+MOTION = ("smooth", "reduced")
 
 DEFAULTS: Dict[str, Any] = {
     "schema_version": 1,
@@ -32,6 +34,7 @@ DEFAULTS: Dict[str, Any] = {
     # cards per day for the Today panel; 0 = no goal
     "daily_goal": 0,
     "deck_click": "select",
+    "motion": "smooth",
 }
 
 _log = logging.getLogger("refine")
@@ -64,6 +67,8 @@ def normalize(raw: Optional[Mapping]) -> Dict[str, Any]:
             for h in HOME_IDS:
                 if isinstance(home.get(h), bool):
                     out["home"][h] = home[h]
+        if raw.get("motion") in MOTION:
+            out["motion"] = raw["motion"]
         if raw.get("deck_click") in DECK_CLICK:
             out["deck_click"] = raw["deck_click"]
         goal = raw.get("daily_goal")

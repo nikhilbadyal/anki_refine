@@ -19,3 +19,5 @@ html.refine.rf-s-pages h2 {
   letter-spacing: -0.01em;
 }
 html.refine.rf-s-pages a { color: var(--rf-accent-text); }
+
+html.refine.rf-motion.rf-s-pages body > div { animation: rf-enter 180ms var(--rf-ease) backwards; }

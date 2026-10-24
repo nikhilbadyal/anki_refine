@@ -203,6 +203,18 @@ class _SettingsDialog(QDialog):
             dens_row.addWidget(rb)
         dens_row.addStretch(1)
         root.addLayout(dens_row)
+        motion_row = QHBoxLayout()
+        motion_row.setSpacing(12)
+        motion_row.addWidget(self._row_label("Motion"))
+        self._motion = {"smooth": QRadioButton("Smooth"), "reduced": QRadioButton("Reduced")}
+        self._motion["smooth"].setToolTip("Gentle fades between screens and on hover. Your system's reduced-motion setting still turns them off.")
+        motion_group = QButtonGroup(self)
+        for value, rb in self._motion.items():
+            motion_group.addButton(rb)
+            rb.toggled.connect(self._safe(lambda on, v=value: on and self._set("motion", v)))
+            motion_row.addWidget(rb)
+        motion_row.addStretch(1)
+        root.addLayout(motion_row)
         root.addWidget(self._rule())
 
         # Screens
@@ -327,6 +339,7 @@ class _SettingsDialog(QDialog):
         chain = (
             list(self._swatches.values())
             + [self._density[d] for d in DENSITIES]
+            + [self._motion["smooth"], self._motion["reduced"]]
             + [self._enabled]
             + [self._surface[s] for s in SURFACE_IDS]
             + [self._home[h] for h, _l in _HOME]
@@ -375,6 +388,8 @@ class _SettingsDialog(QDialog):
                 cb.setEnabled(enabled)
             self._ease.setChecked(bool((cfg.get("reviewer") or {}).get("ease_colors", True)))
             self._goal.setValue(int(cfg.get("daily_goal", 0) or 0))
+            for value, rb in self._motion.items():
+                rb.setChecked(cfg.get("motion", "smooth") == value)
             for value, rb in self._click.items():
                 rb.setChecked(cfg.get("deck_click", "select") == value)
                 rb.setEnabled(enabled)

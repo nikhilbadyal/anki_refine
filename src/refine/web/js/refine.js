@@ -68,29 +68,30 @@
         // As in the design: a click selects the deck and stays on Home (the
         // headline's Study button follows it); a double-click opens Anki's
         // overview. With the "overview" setting, Anki's own handler runs.
-        (function (id) {
-          var pending = null;
+        (function (id, row, deckName) {
           link.addEventListener("click", function (ev) {
             if (!document.documentElement.classList.contains("rf-click-select") || ev.shiftKey) return;
             ev.preventDefault();
             ev.stopImmediatePropagation(); // Anki's inline onclick would open the overview
-            // selecting re-renders the page, so wait briefly for a double-click
-            if (pending) clearTimeout(pending);
-            pending = setTimeout(function () {
-              pending = null;
-              pycmd("refine:deck_browser:select:" + id);
-            }, 250);
+            // instant: update the page here, tell Anki in the background (no reload)
+            var rows = document.querySelectorAll("tr.deck.current");
+            for (var r = 0; r < rows.length; r++) rows[r].classList.remove("current");
+            row.classList.add("current");
+            var btn = document.querySelector(".rf-hero .rf-btn-primary");
+            if (btn && row.classList.contains("rf-has-due")) {
+              btn.setAttribute("onclick", "return pycmd('refine:deck_browser:study:" + id + "')");
+              btn.title = "Study " + deckName;
+              var label = btn.querySelector(".rf-hero-deck");
+              if (label) label.textContent = deckName;
+            }
+            pycmd("refine:deck_browser:select:" + id);
           }, true);
           link.addEventListener("dblclick", function (ev) {
             if (!document.documentElement.classList.contains("rf-click-select")) return;
             ev.preventDefault();
-            if (pending) {
-              clearTimeout(pending);
-              pending = null;
-            }
             pycmd("open:" + id);
           });
-        })(tr.id);
+        })(tr.id, tr, name);
         link.title = "Click to select · double-click for the overview";
       }
       var opts = tr.querySelector("td.opts");

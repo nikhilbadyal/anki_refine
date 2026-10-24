@@ -43,6 +43,7 @@ class SidebarSurface(WebSurface):
         self._extras: list[tuple[str, str]] = []
         self._stats_shortcuts: list[Any] = []
         self._view: Any = None  # Refine's Stats webview (created on first use)
+        self._stats_loaded = False
         self._bottom: Any = None
 
     # ----------------------------------------------------------- lifecycle
@@ -164,9 +165,20 @@ class SidebarSurface(WebSurface):
         mw = ctx.mw
         if new == STATS_STATE:
             view = self._stats_view(ctx)
+            from aqt.qt import QColor
+            from aqt.theme import theme_manager
+
+            from ..theme.tokens import tokens
+
+            cfg = ctx.config.get()
+            bg = tokens(theme_manager.night_mode, cfg["accent"], cfg["density"])["bg"]
+            view.page().setBackgroundColor(QColor(bg))  # no grey flash while it loads
             mw.web.hide()
             view.show()
-            view.load_sveltekit_page("graphs", cache_bust=True)
+            # cache-bust once per session (fresh code after an Anki update);
+            # later visits reuse the cached page bundle, the data is always new
+            view.load_sveltekit_page("graphs", cache_bust=not self._stats_loaded)
+            self._stats_loaded = True
             self._draw_stats_bottom(ctx)
         elif old == STATS_STATE:
             if self._view is not None:

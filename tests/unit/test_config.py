@@ -174,5 +174,14 @@ class DeckClick(unittest.TestCase):
         self.assertEqual(config.normalize({"deck_click": "jump"})["deck_click"], "select")
 
 
+class Motion(unittest.TestCase):
+    def test_motion_values(self) -> None:
+        from refine import config
+
+        self.assertEqual(config.normalize(None)["motion"], "smooth")
+        self.assertEqual(config.normalize({"motion": "reduced"})["motion"], "reduced")
+        self.assertEqual(config.normalize({"motion": "fast"})["motion"], "smooth")
+
+
 if __name__ == "__main__":
     unittest.main()

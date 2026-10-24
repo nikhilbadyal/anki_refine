@@ -2,6 +2,16 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.2.2] - 2026-10-24
+
+### Changed (smoothness)
+- Refine's styles and script are now built into each page instead of being downloaded from Anki's local server on every screen change (Anki doesn't let add-on files stay cached). Screen changes are now as fast as stock Anki.
+- Selecting a deck is instant: the page updates in place instead of reloading.
+- Home renders complete at once: the Today, Activity and Next 7 days panels reuse their last results and only re-query after something changed.
+- No more grey flash between screens: the window paints Refine's background while Anki rebuilds a page.
+- Statistics reopens faster (its page code is reused within a session).
+- New **Motion** setting (default Smooth): gentle fade between screens with the sidebar staying still, soft hover transitions, panels fade when they update. Your system's reduced-motion setting still turns this off.
+
 ## [0.2.1] - 2026-10-24
 
 ### Changed

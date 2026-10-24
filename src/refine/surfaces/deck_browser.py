@@ -31,6 +31,11 @@ class DeckBrowserSurface(WebSurface):
     def __init__(self) -> None:
         self._totals = home.Totals()
         self._generation = 0
+        # last panel markup and the collection state it was computed for, so
+        # Home renders complete at once and only re-queries after changes
+        self._panels: dict[str, str] = {}
+        self._panels_key: tuple | None = None
+        self._render_key: tuple | None = None
 
     def flags(self, cfg: dict) -> dict[str, bool]:
         h = cfg.get("home", {})
@@ -73,7 +78,20 @@ class DeckBrowserSurface(WebSurface):
             hero = home.onboarding_html()
         else:
             hero = home.hero_html(self._totals, target_name, target_id)
-        content.stats = hero + home.side_placeholder() + content.stats
+        self._render_key = self._key(ctx)
+        if self._panels.get("pace"):
+            import html as _html
+
+            hero = hero.replace(
+                'id="rf-pace"></span>', f'id="rf-pace">{_html.escape(self._panels["pace"])}</span>', 1
+            )
+        content.stats = hero + home.side_placeholder(self._panels) + content.stats
+
+    def _key(self, ctx: Any) -> tuple:
+        """Changes whenever the panel figures could: any collection change,
+        a new day, or a different daily goal."""
+        col = ctx.mw.col
+        return (col.mod, col.sched.today, ctx.config.get().get("daily_goal", 0))
 
     def _study_target(self, ctx: Any, tree: Any) -> tuple[int | None, str | None]:
         """The current deck if it has cards waiting, else the first top-level
@@ -104,9 +122,12 @@ class DeckBrowserSurface(WebSurface):
             return
         from aqt.operations import QueryOp
 
+        if self._panels and self._render_key == self._panels_key:
+            return  # the page already shows up-to-date panels
         self._generation += 1
         gen = self._generation
         totals = self._totals
+        key = self._render_key
 
         def done(stats: home.HomeStats) -> None:
             if gen != self._generation or ctx.mw.state != "deckBrowser":
@@ -117,7 +138,10 @@ class DeckBrowserSurface(WebSurface):
                 "rf-forecast": home.forecast_html(stats),
                 "pace": home.pace_text(totals, stats),
             }
-            ctx.mw.web.eval(f"window.rfFillHome && window.rfFillHome({json.dumps(payload)});")
+            changed = {k: v for k, v in payload.items() if self._panels.get(k) != v}
+            self._panels, self._panels_key = payload, key
+            if changed:  # only touch the page if something differs
+                ctx.mw.web.eval(f"window.rfFillHome && window.rfFillHome({json.dumps(changed)});")
 
         def failed(err: Exception) -> None:
             ctx.log.error("home stats failed: %r", err)
@@ -142,14 +166,14 @@ class DeckBrowserSurface(WebSurface):
             self._select(ctx, int(arg))
 
     def _select(self, ctx: Any, deck_id: int) -> None:
-        """Make a deck current and stay on Home (the headline's Study button
-        follows it). Same operation as Anki's Shift-click on a row."""
+        """Make a deck current and stay on Home. Same operation as Anki's
+        Shift-click on a row."""
         from aqt.operations.deck import set_current_deck
 
+        # The page already updated itself (refine.js). initiator=deckBrowser
+        # makes Anki skip its reload, exactly as for its own Shift-click.
         mw = ctx.mw
-        set_current_deck(parent=mw, deck_id=deck_id).success(
-            lambda _: mw.deckBrowser.refresh() if mw.state == "deckBrowser" else None
-        ).run_in_background()
+        set_current_deck(parent=mw, deck_id=deck_id).run_in_background(initiator=mw.deckBrowser)
 
     def _options_menu(self, ctx: Any, menu: Any, deck_id: int) -> None:
         """Adds "Open overview" to a deck's ⋯ menu, since a click on the deck

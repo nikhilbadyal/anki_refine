@@ -15,7 +15,12 @@ from typing import Any
 
 from aqt import gui_hooks
 
+from .. import assets
 from ..theme import css as theme_css
+
+
+def _strip_style(block: str) -> str:
+    return block[block.index(">") + 1 : block.rindex("</style>")]
 from .base import Surface
 
 
@@ -38,8 +43,9 @@ def inject_page(
     payload = {
         "classes": ["refine", f"rf-s-{surface_id}", f"rf-page-{page}", *extra_classes],
         "html": prepend_html,
-        "links": [f"{base}/css/fonts.css"] + [f"{base}/css/{f}" for f in css_files],
-        "script": f"{base}/js/refine.js",
+        # inlined text (see assets.py): no extra requests, no flash of unstyled page
+        "css": _strip_style(assets.css(ctx.addon_dir / "web", base, ["fonts.css", *css_files])),
+        "script": assets.text(ctx.addon_dir / "web", "js/refine.js"),
         "tokens": theme_css.root_css(cfg["accent"], cfg["density"]),
         "styleId": theme_css.STYLE_ID,
     }
@@ -49,11 +55,10 @@ def inject_page(
         "var keep=function(){window.rfKeep.forEach(function(c){"
         "if(!d.classList.contains(c)) d.classList.add(c);});};"
         "keep();new MutationObserver(keep).observe(d,{attributes:true,attributeFilter:['class']});"
-        "p.links.forEach(function(h){var l=document.createElement('link');"
-        "l.rel='stylesheet';l.href=h;document.head.appendChild(l);});"
+        "var c=document.createElement('style');c.textContent=p.css;document.head.appendChild(c);"
         "var s=document.createElement('style');s.id=p.styleId;s.textContent=p.tokens;"
         "document.head.appendChild(s);"
-        "var j=document.createElement('script');j.src=p.script;document.head.appendChild(j);"
+        "if(!window.rfApply){(0,eval)(p.script);}"
         "if(p.html&&!document.querySelector('.rf-shell')){document.body.insertAdjacentHTML('afterbegin',p.html);}"
         f"}})({json.dumps(payload)});"
     )

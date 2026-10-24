@@ -193,12 +193,17 @@ def onboarding_html() -> str:
     )
 
 
-def side_placeholder() -> str:
+def side_placeholder(filled: dict | None = None) -> str:
+    """Side panels. With `filled` (panel class -> html from the last query)
+    they render complete at once instead of as placeholders."""
+    filled = filled or {}
+
     def panel(cls: str, title: str) -> str:
+        body = filled.get(cls) or '<div class="rf-skeleton"></div>'
         return (
             f'<section class="rf-panel rf-side-panel {cls}" aria-label="{title}">'
             f'<h2 class="rf-panel-title">{title}</h2><div class="rf-panel-body" data-rf-fill="{cls}">'
-            '<div class="rf-skeleton"></div></div></section>'
+            f"{body}</div></section>"
         )
 
     return (

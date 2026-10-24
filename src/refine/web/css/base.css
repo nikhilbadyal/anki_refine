@@ -48,12 +48,40 @@ html.refine a:focus-visible {
   outline-offset: 2px;
 }
 
-/* Anki's "Reduce motion" (on by default) also turns ours off. */
-html.refine body.reduce-motion *,
-html.refine body.reduce-motion *::before,
-html.refine body.reduce-motion *::after { transition: none !important; }
+/* Motion follows Refine's own setting (Settings > Motion; Anki's "Reduce
+   motion" is on by default for everyone). The operating system's
+   reduced-motion preference always wins. Only transitions and Refine's own
+   animations are affected (Anki's sync spinner keeps spinning). */
+html.refine:not(.rf-motion) *,
+html.refine:not(.rf-motion) *::before,
+html.refine:not(.rf-motion) *::after { transition: none !important; }
+html.refine:not(.rf-motion) .rf-anim { animation: none !important; }
+
+@keyframes rf-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rf-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* Page content eases in on every screen change; the sidebar stays still so
+   the app shell feels persistent. "backwards" leaves no transform behind
+   (Anki's deck drag-and-drop measures positions). */
+html.refine.rf-motion.rf-page-DeckBrowser body > center,
+html.refine.rf-motion.rf-page-Overview body > center,
+html.refine.rf-motion .rf-header-title {
+  animation: rf-enter 180ms var(--rf-ease) backwards;
+}
+html.refine.rf-motion [data-rf-fill] > * { animation: rf-fade 200ms var(--rf-ease) backwards; }
+html.refine.rf-motion.rf-s-deck_browser tr.deck td { transition: background-color 120ms var(--rf-ease); }
+
 @media (prefers-reduced-motion: reduce) {
   html.refine * { transition: none !important; }
+  html.refine body > center,
+  html.refine body > div,
+  html.refine .rf-header-title,
+  html.refine [data-rf-fill] > * { animation: none !important; }
 }
 
 /* Scrollbars (Anki's rules are body:not(.isMac) scoped; match that). */
