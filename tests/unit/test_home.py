@@ -225,5 +225,14 @@ class Queries(unittest.TestCase):
         self.assertEqual(db.calls[0][2], ((self.CUT - DAY) * 1000,))
 
 
+class Onboarding(unittest.TestCase):
+    def test_uses_deck_browser_commands(self) -> None:
+        out = home.onboarding_html()
+        for cmd in ("create", "import", "shared"):
+            self.assertIn(f"pycmd('{cmd}')", out)
+        self.assertIn("rf-onboarding", out)
+        self.assertNotIn("caught up", out)
+
+
 if __name__ == "__main__":
     unittest.main()

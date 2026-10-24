@@ -58,11 +58,12 @@ class DeckBrowserSurface(WebSurface):
         target_id, target_name = self._study_target(ctx, tree)
         # panels are always emitted when Refine is on; CSS shows them only
         # under html.rf-s-deck_browser.rf-h-*, so toggles apply live
-        content.stats = (
-            home.hero_html(self._totals, target_name, target_id)
-            + home.side_placeholder()
-            + content.stats
-        )
+        if ctx.mw.col.card_count() == 0:
+            # a new collection: a welcome with next steps, not "All caught up"
+            hero = home.onboarding_html()
+        else:
+            hero = home.hero_html(self._totals, target_name, target_id)
+        content.stats = hero + home.side_placeholder() + content.stats
 
     def _study_target(self, ctx: Any, tree: Any) -> tuple[int | None, str | None]:
         """The current deck if it has cards waiting, else the first top-level

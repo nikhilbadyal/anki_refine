@@ -231,3 +231,12 @@ html.refine.rf-s-deck_browser #outer { border-top: 1px solid var(--rf-border); }
 html.refine.rf-s-deck_browser #header { padding: 9px; }
 html.refine.rf-s-deck_browser #header button { margin: 0 4px; color: var(--rf-text-muted); border-color: var(--rf-border-strong); }
 html.refine.rf-s-deck_browser #header button:hover { color: var(--rf-text); }
+
+/* ------------------------------------------------------- first run */
+
+html.refine .rf-onboarding { align-items: center; }
+html.refine .rf-onboarding-text { margin: 0; font-size: var(--rf-text-m); max-width: 420px; line-height: 1.5; }
+html.refine .rf-onboarding-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* nothing to chart yet: hide the side column and use the full width */
+html.refine.rf-s-deck_browser.rf-page-DeckBrowser center:has(.rf-onboarding) { grid-template-columns: minmax(0, 1fr); max-width: 900px; }
+html.refine.rf-s-deck_browser.rf-page-DeckBrowser center:has(.rf-onboarding) > .rf-side { display: none; }

@@ -175,6 +175,24 @@ def hero_html(t: Totals, target_name: str | None, target_id: int | None, now: da
     )
 
 
+def onboarding_html() -> str:
+    """Shown instead of the headline when the collection has no cards yet.
+    The buttons use the deck list's own commands (aqt/deckbrowser.py
+    _linkHandler: create / import / shared)."""
+    return (
+        '<section class="rf-hero rf-panel rf-onboarding" aria-label="Get started">'
+        '<div class="rf-hero-text"><div class="rf-muted rf-hero-date">Getting started</div>'
+        '<h1 class="rf-hero-title">Welcome to Anki</h1>'
+        '<p class="rf-muted rf-onboarding-text">Add your first cards with <b>Add</b>, or bring in a deck to study.</p>'
+        "</div>"
+        '<div class="rf-onboarding-actions">'
+        "<button class=\"rf-btn rf-btn-primary rf-btn-lg\" onclick=\"return pycmd('create')\">Create a deck</button>"
+        "<button class=\"rf-btn rf-btn-lg\" onclick=\"return pycmd('import')\">Import a file</button>"
+        "<button class=\"rf-btn rf-btn-lg\" onclick=\"return pycmd('shared')\">Browse shared decks</button>"
+        "</div></section>"
+    )
+
+
 def side_placeholder() -> str:
     def panel(cls: str, title: str) -> str:
         return (
