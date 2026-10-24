@@ -2,6 +2,11 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.2.1] - 2026-10-24
+
+### Changed
+- Clicking a deck name on Home now selects it and stays on Home (the headline's Study button follows it), as in the design. Double-click opens Anki's deck overview; the deck's ⋯ menu has **Open overview**; Esc on the overview returns Home. Settings ▸ "Clicking a deck" restores Anki's usual behaviour.
+
 ## [0.2.0] - 2026-10-24
 
 ### Added
