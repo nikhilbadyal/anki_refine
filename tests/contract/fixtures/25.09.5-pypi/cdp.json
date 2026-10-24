@@ -1,0 +1,46 @@
+{
+  "port": 9233,
+  "version": {
+    "Browser": "Anki/3.11.4150.1013",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/6.8.2 Chrome/122.0.6261.171 Safari/537.36",
+    "V8-Version": "12.2.281.28",
+    "WebKit-Version": "537.36 (@2d1b7e84e03edb39cdb1175fe5f5b9ac12b70e86)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9233/devtools/browser/190ee1ea-fa5a-4733-80b6-a8f9c57bf4f4"
+  },
+  "first_seen_after_s": 2.6,
+  "targets": [
+    {
+      "description": "",
+      "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:9233/devtools/page/A307B63FA52BA7030C30C825838C08BA",
+      "faviconUrl": "http://127.0.0.1:61448/favicon.ico",
+      "id": "A307B63FA52BA7030C30C825838C08BA",
+      "title": "bottom toolbar",
+      "type": "page",
+      "url": "http://127.0.0.1:61448/_anki/legacyPageData?id=2055429268976",
+      "webSocketDebuggerUrl": "ws://127.0.0.1:9233/devtools/page/A307B63FA52BA7030C30C825838C08BA"
+    },
+    {
+      "description": "",
+      "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:9233/devtools/page/A9F388083B39C907D1D80A1156FBBBB5",
+      "faviconUrl": "http://127.0.0.1:61448/favicon.ico",
+      "id": "A9F388083B39C907D1D80A1156FBBBB5",
+      "title": "main webview",
+      "type": "page",
+      "url": "http://127.0.0.1:61448/_anki/legacyPageData?id=2055429268400",
+      "webSocketDebuggerUrl": "ws://127.0.0.1:9233/devtools/page/A9F388083B39C907D1D80A1156FBBBB5"
+    },
+    {
+      "description": "",
+      "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:9233/devtools/page/63E28A979B4DCA5C7B2D096B9B21D0AA",
+      "faviconUrl": "http://127.0.0.1:61448/favicon.ico",
+      "id": "63E28A979B4DCA5C7B2D096B9B21D0AA",
+      "title": "top toolbar",
+      "type": "page",
+      "url": "http://127.0.0.1:61448/_anki/legacyPageData?id=2055429261632",
+      "webSocketDebuggerUrl": "ws://127.0.0.1:9233/devtools/page/63E28A979B4DCA5C7B2D096B9B21D0AA"
+    }
+  ],
+  "exit_code": 0,
+  "wall_seconds": 33.7
+}

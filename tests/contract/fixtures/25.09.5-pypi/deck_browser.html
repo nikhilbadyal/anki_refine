@@ -1,0 +1,42 @@
+<html class="night-mode" dir="ltr" data-bs-theme="dark"><head>
+    <title>main webview</title>
+<base href="http://127.0.0.1:PORT/"><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/webview.css"><style>
+body { zoom: 1; background-color: var(--canvas); }
+html { font-family:"Segoe UI"; }
+
+button { font-family: "Segoe UI"; }
+            
+:root { --canvas: #f5f5f5 }
+:root[class*=night-mode] { --canvas: #2c2c2c }
+</style><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/deckbrowser.css">
+</head>
+
+<body class="isWin nightMode night_mode reduce-motion fancy">
+<script src="http://127.0.0.1:PORT/_anki/js/webview.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/vendor/jquery.min.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/vendor/jquery-ui.min.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/deckbrowser.js"></script>
+
+<center>
+<table cellspacing="0" cellpadding="3">
+
+<tbody><tr><th colspan="5" align="start">Deck</th>
+<th class="count">New</th>
+<th class="count">Learn</th>
+<th class="count">Due</th>
+<th class="optscol"></th></tr><tr class="top-level-drag-row ui-droppable"><td colspan="6">&nbsp;</td></tr><tr class="deck ui-draggable ui-draggable-handle ui-droppable" id="1792813593181" onclick="if(event.shiftKey) return pycmd(&quot;select:1792813593181&quot;)">
+
+        <td class="decktd" colspan="5"><span class="collapse"></span><a class="deck " href="#" onclick="return pycmd('open:1792813593181')">M0 Empty</a></td><td align="end"><span class="zero-count">0</span></td><td align="end"><span class="zero-count">0</span></td><td align="end"><span class="zero-count">0</span></td><td align="center" class="opts"><a onclick="return pycmd(&quot;opts:1792813593181&quot;);"><img src="/_anki/imgs/gears.svg" class="gears"></a></td></tr><tr class="deck ui-draggable ui-draggable-handle ui-droppable" id="1792813593198" onclick="if(event.shiftKey) return pycmd(&quot;select:1792813593198&quot;)">
+
+        <td class="decktd" colspan="5"><span class="collapse"></span><a class="deck filtered" href="#" onclick="return pycmd('open:1792813593198')">M0 Filtered</a></td><td align="end"><span class="new-count">1</span></td><td align="end"><span class="zero-count">0</span></td><td align="end"><span class="zero-count">0</span></td><td align="center" class="opts"><a onclick="return pycmd(&quot;opts:1792813593198&quot;);"><img src="/_anki/imgs/gears.svg" class="gears"></a></td></tr><tr class="deck current ui-draggable ui-draggable-handle ui-droppable" id="1792813593176" onclick="if(event.shiftKey) return pycmd(&quot;select:1792813593176&quot;)">
+
+        <td class="decktd" colspan="5"><a class="collapse" href="#" onclick="return pycmd(&quot;collapse:1792813593176&quot;)">+</a><a class="deck " href="#" onclick="return pycmd('open:1792813593176')">M0 Probe</a></td><td align="end"><span class="new-count">4</span></td><td align="end"><span class="zero-count">0</span></td><td align="end"><span class="review-count">1</span></td><td align="center" class="opts"><a onclick="return pycmd(&quot;opts:1792813593176&quot;);"><img src="/_anki/imgs/gears.svg" class="gears"></a></td></tr>
+</tbody></table>
+
+<br>
+<div id="studiedToday"><span>Studied ⁨0⁩ cards
+⁨in ⁨0⁩ seconds⁩ today
+(⁨0⁩s/card)</span></div>
+</center>
+
+</body></html>

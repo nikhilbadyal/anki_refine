@@ -1,0 +1,32 @@
+<html class="night-mode" dir="ltr" data-bs-theme="dark"><head>
+    <title>top toolbar</title>
+<base href="http://127.0.0.1:PORT/"><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/webview.css"><style>
+body { zoom: 1; background-color: var(--canvas); }
+html { font-family:"Segoe UI"; }
+:root.system-font-size, :root.night-mode.system-font-size { font-size: 12.0px; --bs-body-font-size: 12.0px; --font-size: 12.0px; }
+
+button { font-family: "Segoe UI"; }
+            
+:root { --canvas: #f5f5f5 }
+:root[class*=night-mode] { --canvas: #2c2c2c }
+</style><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/toolbar.css">
+</head>
+
+<body class="isWin nightMode night_mode reduce-motion fancy" style="min-height: 450px;">
+<script src="http://127.0.0.1:PORT/_anki/js/webview.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/vendor/jquery.min.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/toolbar.js"></script>
+
+<div class="header">
+  <div class="left-tray"></div>
+  <div class="toolbar"><a class="hitem" tabindex="-1" aria-label="Decks" title="Shortcut key: ⁨D⁩" id="decks" href="#" onclick="return pycmd('decks')">Decks</a>
+<a class="hitem" tabindex="-1" aria-label="Add" title="Shortcut key: ⁨A⁩" id="add" href="#" onclick="return pycmd('add')">Add</a>
+<a class="hitem" tabindex="-1" aria-label="Browse" title="Shortcut key: ⁨B⁩" id="browse" href="#" onclick="return pycmd('browse')">Browse</a>
+<a class="hitem" tabindex="-1" aria-label="Stats" title="Shortcut key: ⁨T⁩" id="stats" href="#" onclick="return pycmd('stats')">Stats</a>
+
+<a class="hitem" tabindex="-1" aria-label="Sync" title="Shortcut key: ⁨Y⁩" id="sync" href="#" onclick="return pycmd('sync')">Sync<img id="sync-spinner" src="/_anki/imgs/refresh.svg">
+</a></div>
+  <div class="right-tray"></div>
+</div>
+
+</body></html>

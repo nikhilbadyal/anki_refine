@@ -1,0 +1,65 @@
+<html class="night-mode" dir="ltr" data-bs-theme="dark"><head>
+    <title>main webview</title>
+<base href="http://127.0.0.1:PORT/"><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/webview.css"><style>
+body { zoom: 1; background-color: var(--canvas); }
+html { font-family:"Segoe UI"; }
+
+button { font-family: "Segoe UI"; }
+            
+:root { --canvas: #f5f5f5 }
+:root[class*=night-mode] { --canvas: #2c2c2c }
+</style><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/overview.css">
+</head>
+
+<body class="isWin nightMode night_mode reduce-motion fancy">
+<script src="http://127.0.0.1:PORT/_anki/js/webview.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/vendor/jquery.min.js"></script>
+
+<center>
+<h3>M0 Probe</h3>
+
+<p>
+
+</p><table width="400" cellpadding="5">
+<tbody><tr><td align="center" valign="top">
+<table cellspacing="5">
+
+<tbody><tr>
+    <td>New:</td>
+    <td>
+        <b>
+            <span class="new-count">4</span>
+            <span class="bury-count" title="Counts differ from the deck list, because burying is enabled. Some cards have been excluded, and others may have taken their place."></span>
+        </b>
+    </td>
+</tr>
+
+
+<tr>
+    <td>Learning:</td>
+    <td>
+        <b>
+            <span class="learn-count">0</span>
+            <span class="bury-count" title="Counts differ from the deck list, because burying is enabled. Some cards have been excluded, and others may have taken their place."></span>
+        </b>
+    </td>
+</tr>
+
+
+<tr>
+    <td>To Review:</td>
+    <td>
+        <b>
+            <span class="review-count">1</span>
+            <span class="bury-count" title="Counts differ from the deck list, because burying is enabled. Some cards have been excluded, and others may have taken their place."></span>
+        </b>
+    </td>
+</tr>
+
+</tbody></table>
+</td><td align="center">
+
+<button id="study" class="but " onclick="pycmd('study');return false;" title="" autofocus="">Study Now</button></td></tr></tbody></table>
+</center>
+
+</body></html>

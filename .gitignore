@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# Isolated Anki installs and dev profiles (never commit: contain collections)
+.venv/
+.anki-dev/
+
+# Build and run output
+dist/
+out/
+
+# Add-on user data
+src/refine/user_files/*
+!src/refine/user_files/README.txt
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

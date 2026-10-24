@@ -1,0 +1,553 @@
+{
+  "errors": [],
+  "steps": {
+    "seed": {
+      "seconds": 0.75
+    },
+    "deck_browser": {
+      "seconds": 0.01
+    },
+    "engine_features": {
+      "seconds": 0.01
+    },
+    "web_exports": {
+      "seconds": 0.01
+    },
+    "toolbar_height": {
+      "seconds": 5.48
+    },
+    "overview": {
+      "seconds": 0.72
+    },
+    "review_question": {
+      "seconds": 0.73
+    },
+    "review_answer": {
+      "seconds": 0.72
+    },
+    "reviewer_refresh_paths": {
+      "seconds": 5.72
+    },
+    "answer_card": {
+      "seconds": 1.42
+    },
+    "day_cutoff": {
+      "seconds": 0.01
+    },
+    "deck_browser_after": {
+      "seconds": 0.72
+    },
+    "theme_toggle": {
+      "seconds": 3.06
+    }
+  },
+  "base_folder": "<repo>\\.anki-dev\\26.09.3-installed",
+  "versions": {
+    "python": "3.13.15 (tags/v3.13.15:4061bc4, Aug  5 2026, 13:05:39) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "anki": "26.09.3",
+    "int_version": 260903,
+    "qt": "6.11.2",
+    "pyqt": "6.11.0",
+    "webengine": "6.11.2",
+    "chromium_from_qt": "140.0.7339.225",
+    "frozen_or_installed": true,
+    "executable": "~\\AppData\\Local\\Programs\\Anki\\anki.exe"
+  },
+  "seed": {
+    "review_due": true,
+    "filtered": true,
+    "created": true
+  },
+  "snapshots": {
+    "deck_browser": {
+      "bytes": 3444,
+      "webview_height": 450,
+      "title": "main webview"
+    },
+    "deck_browser_bottom": {
+      "bytes": 1367,
+      "webview_height": 63,
+      "title": "bottom toolbar"
+    },
+    "toolbar": {
+      "bytes": 1848,
+      "webview_height": 37,
+      "title": "top toolbar"
+    },
+    "overview": {
+      "bytes": 2168,
+      "webview_height": 450,
+      "title": "main webview"
+    },
+    "overview_bottom": {
+      "bytes": 1374,
+      "webview_height": 63,
+      "title": "bottom toolbar"
+    },
+    "reviewer_question": {
+      "bytes": 1289,
+      "webview_height": 446,
+      "title": "main webview"
+    },
+    "reviewer_bottom_question": {
+      "bytes": 1946,
+      "webview_height": 67,
+      "title": "bottom toolbar"
+    },
+    "reviewer_answer": {
+      "bytes": 1317,
+      "webview_height": 446,
+      "title": "main webview"
+    },
+    "reviewer_bottom_answer": {
+      "bytes": 2334,
+      "webview_height": 67,
+      "title": "bottom toolbar"
+    },
+    "deck_browser_after_review": {
+      "bytes": 3450,
+      "webview_height": 450,
+      "title": "main webview"
+    },
+    "deck_browser_flipped_theme": {
+      "bytes": 3420,
+      "webview_height": 450,
+      "title": "main webview"
+    }
+  },
+  "engine": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/6.11.2 Chrome/140.0.0.0 Safari/537.36",
+    "chrome": "140.0.0.0",
+    "devicePixelRatio": 1,
+    "prefersReducedMotion": false,
+    "prefersDark": true,
+    "htmlClass": "night-mode",
+    "bodyClass": "isWin nightMode night_mode reduce-motion fancy",
+    "layer_applies": true,
+    "layer_loses_to_unlayered": true,
+    "CSSLayerBlockRule": true,
+    "nesting": true,
+    "supports": {
+      "where": true,
+      "is": true,
+      "has": true,
+      "focus_visible": true,
+      "color_mix": true,
+      "oklch": true,
+      "container_queries": true,
+      "mask_image": true,
+      "text_wrap_balance": true,
+      "ruby_position": true,
+      "scrollbar_gutter": true,
+      "accent_color": true
+    }
+  },
+  "refine_addon_folder": "refine",
+  "refine_module_loaded": true,
+  "web_exports": [
+    [
+      "/_addons/refine/web/css/base.css",
+      200,
+      "text/css; charset=utf-8"
+    ],
+    [
+      "/_addons/refine/config.json",
+      404,
+      "text/plain"
+    ]
+  ],
+  "toolbar_height": {
+    "1_baseline": {
+      "offsetHeight": 455,
+      "scrollHeight": 455,
+      "innerHeight": 37,
+      "qt_widget_height": 37
+    },
+    "2_after_late_css": {
+      "offsetHeight": 487,
+      "scrollHeight": 487,
+      "innerHeight": 37,
+      "qt_widget_height": 37
+    },
+    "3_after_late_css_then_adjustHeightToFit": {
+      "offsetHeight": 455,
+      "scrollHeight": 455,
+      "innerHeight": 69,
+      "qt_widget_height": 69
+    },
+    "4_late_css_removed": {
+      "offsetHeight": 455,
+      "scrollHeight": 455,
+      "innerHeight": 37,
+      "qt_widget_height": 37
+    },
+    "5_render_time_css_via_draw": {
+      "offsetHeight": 455,
+      "scrollHeight": 455,
+      "innerHeight": 69,
+      "qt_widget_height": 69,
+      "content_hook_contexts": [
+        "TopToolbar"
+      ]
+    },
+    "6_restored_via_draw": {
+      "offsetHeight": 455,
+      "scrollHeight": 455,
+      "innerHeight": 37,
+      "qt_widget_height": 37,
+      "content_hook_contexts": [
+        "TopToolbar"
+      ]
+    }
+  },
+  "reviewer_refresh_paths": {
+    "js_live_style_injection": {
+      "before": {
+        "card_id": 1792813522895,
+        "reviewer_state": "answer",
+        "main_state": "review",
+        "content_hook_calls": 11,
+        "window_active": false
+      },
+      "after": {
+        "card_id": 1792813522895,
+        "reviewer_state": "answer",
+        "main_state": "review",
+        "content_hook_calls": 11,
+        "window_active": false
+      },
+      "main_computed_outline": "rgb(9, 8, 7)",
+      "bottom_computed_outline": "rgb(9, 8, 7)",
+      "content_hook_contexts": []
+    },
+    "reviewer.refresh_if_needed()": {
+      "before": {
+        "card_id": 1792813522895,
+        "reviewer_state": "answer",
+        "main_state": "review",
+        "content_hook_calls": 11,
+        "window_active": false
+      },
+      "after": {
+        "card_id": 1792813522895,
+        "reviewer_state": "answer",
+        "main_state": "review",
+        "content_hook_calls": 11,
+        "window_active": false
+      },
+      "content_hook_contexts": [],
+      "same_card": true
+    },
+    "mw.reset()": {
+      "before": {
+        "card_id": 1792813522895,
+        "reviewer_state": "answer",
+        "main_state": "review",
+        "content_hook_calls": 11,
+        "window_active": false
+      },
+      "after": {
+        "card_id": 1792813522895,
+        "reviewer_state": "answer",
+        "main_state": "review",
+        "content_hook_calls": 11,
+        "window_active": false
+      },
+      "content_hook_contexts": [],
+      "same_card": true
+    },
+    "mw.moveToState(\"review\")": {
+      "before": {
+        "card_id": 1792813522895,
+        "reviewer_state": "answer",
+        "main_state": "review",
+        "content_hook_calls": 11,
+        "window_active": false
+      },
+      "after": {
+        "card_id": 1792813522895,
+        "reviewer_state": "question",
+        "main_state": "review",
+        "content_hook_calls": 13,
+        "window_active": false
+      },
+      "content_hook_contexts": [
+        "Reviewer",
+        "ReviewerBottomBar"
+      ],
+      "same_card": true
+    }
+  },
+  "revlog_before_answer": 1,
+  "day_cutoff": {
+    "now_epoch_s": 1792813545,
+    "day_cutoff": 1792881000,
+    "day_cutoff_type": "int",
+    "seconds_until_cutoff": 67454,
+    "day_cutoff_local_iso": "2026-10-25T04:00:00+05:30",
+    "sched_today_days_elapsed": 0,
+    "col_crt": 1792794600,
+    "days_crt_to_cutoff": 1.0,
+    "rollover_hour": 4,
+    "expected_next_rollover_epoch": 1792881000,
+    "matches_next_local_rollover": true,
+    "revlog_total": 2,
+    "revlog_since_cutoff_minus_1d": 2,
+    "revlog_time_ms_since_cutoff_minus_1d": 3918,
+    "studied_today_string": "Studied ⁨1⁩ card\n⁨in ⁨3.92⁩ seconds⁩ today\n(⁨3.92⁩s/card)",
+    "has_day_did_change_hook": true,
+    "after_rollover_change": {
+      "rollover_hour": 10,
+      "day_cutoff": 1792816200
+    },
+    "restored_day_cutoff": 1792881000
+  },
+  "theme_toggle": {
+    "original_theme": 0,
+    "start_night_mode": true,
+    "before": {
+      "night_mode": true,
+      "style_did_init_calls": 0,
+      "content_hook_calls": 15,
+      "main_classes": [
+        "night-mode",
+        "isWin nightMode night_mode reduce-motion fancy"
+      ],
+      "toolbar_classes": [
+        "night-mode",
+        "isWin nightMode night_mode reduce-motion fancy"
+      ]
+    },
+    "after_flip": {
+      "night_mode": false,
+      "style_did_init_calls": 1,
+      "content_hook_calls": 15,
+      "main_classes": [
+        "",
+        "isWin reduce-motion fancy"
+      ],
+      "toolbar_classes": [
+        "",
+        "isWin reduce-motion fancy"
+      ]
+    },
+    "after_restore": {
+      "night_mode": true,
+      "style_did_init_calls": 2,
+      "content_hook_calls": 15,
+      "main_classes": [
+        "night-mode",
+        "isWin reduce-motion fancy night_mode nightMode"
+      ],
+      "toolbar_classes": [
+        "night-mode",
+        "isWin reduce-motion fancy night_mode nightMode"
+      ]
+    }
+  },
+  "style_did_init_calls": [
+    {
+      "t": 26.484,
+      "before_main_window_did_init": false
+    },
+    {
+      "t": 28.004,
+      "before_main_window_did_init": false
+    }
+  ],
+  "content_hook_log": [
+    {
+      "t": 0.0,
+      "context": "TopToolbar"
+    },
+    {
+      "t": 0.154,
+      "context": "DeckBrowser"
+    },
+    {
+      "t": 0.156,
+      "context": "DeckBrowserBottomBar"
+    },
+    {
+      "t": 1.708,
+      "context": "DeckBrowser"
+    },
+    {
+      "t": 1.71,
+      "context": "DeckBrowserBottomBar"
+    },
+    {
+      "t": 7.727,
+      "context": "TopToolbar"
+    },
+    {
+      "t": 9.241,
+      "context": "TopToolbar"
+    },
+    {
+      "t": 11.462,
+      "context": "Overview"
+    },
+    {
+      "t": 11.464,
+      "context": "OverviewBottomBar"
+    },
+    {
+      "t": 12.894,
+      "context": "Reviewer"
+    },
+    {
+      "t": 12.896,
+      "context": "ReviewerBottomBar"
+    },
+    {
+      "t": 18.976,
+      "context": "Reviewer"
+    },
+    {
+      "t": 18.977,
+      "context": "ReviewerBottomBar"
+    },
+    {
+      "t": 25.047,
+      "context": "DeckBrowser"
+    },
+    {
+      "t": 25.048,
+      "context": "DeckBrowserBottomBar"
+    }
+  ],
+  "events": [
+    {
+      "t": 0.0,
+      "event": "hooks_registered"
+    },
+    {
+      "t": 0.044,
+      "event": "top_toolbar_did_redraw"
+    },
+    {
+      "t": 0.157,
+      "event": "deck_browser_did_render"
+    },
+    {
+      "t": 0.223,
+      "event": "profile_did_open"
+    },
+    {
+      "t": 0.223,
+      "event": "main_window_did_init"
+    },
+    {
+      "t": 1.679,
+      "event": "step",
+      "name": "seed"
+    },
+    {
+      "t": 1.711,
+      "event": "deck_browser_did_render"
+    },
+    {
+      "t": 3.126,
+      "event": "step",
+      "name": "deck_browser"
+    },
+    {
+      "t": 3.842,
+      "event": "step",
+      "name": "engine_features"
+    },
+    {
+      "t": 4.556,
+      "event": "step",
+      "name": "web_exports"
+    },
+    {
+      "t": 5.275,
+      "event": "step",
+      "name": "toolbar_height"
+    },
+    {
+      "t": 11.458,
+      "event": "step",
+      "name": "overview"
+    },
+    {
+      "t": 11.464,
+      "event": "overview_did_refresh"
+    },
+    {
+      "t": 12.891,
+      "event": "step",
+      "name": "review_question"
+    },
+    {
+      "t": 12.898,
+      "event": "reviewer_did_show_question"
+    },
+    {
+      "t": 14.327,
+      "event": "step",
+      "name": "review_answer"
+    },
+    {
+      "t": 14.332,
+      "event": "reviewer_did_show_answer"
+    },
+    {
+      "t": 15.752,
+      "event": "step",
+      "name": "reviewer_refresh_paths"
+    },
+    {
+      "t": 18.978,
+      "event": "reviewer_did_show_question"
+    },
+    {
+      "t": 22.192,
+      "event": "step",
+      "name": "answer_card"
+    },
+    {
+      "t": 22.197,
+      "event": "reviewer_did_show_answer"
+    },
+    {
+      "t": 22.9,
+      "event": "reviewer_did_answer_card"
+    },
+    {
+      "t": 22.901,
+      "event": "reviewer_did_show_question"
+    },
+    {
+      "t": 24.324,
+      "event": "step",
+      "name": "day_cutoff"
+    },
+    {
+      "t": 25.04,
+      "event": "step",
+      "name": "deck_browser_after"
+    },
+    {
+      "t": 25.042,
+      "event": "top_toolbar_did_redraw"
+    },
+    {
+      "t": 25.049,
+      "event": "deck_browser_did_render"
+    },
+    {
+      "t": 26.473,
+      "event": "step",
+      "name": "theme_toggle"
+    },
+    {
+      "t": 30.225,
+      "event": "step",
+      "name": "finish"
+    }
+  ]
+}

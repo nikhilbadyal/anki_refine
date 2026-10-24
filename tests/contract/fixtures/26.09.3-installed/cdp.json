@@ -1,0 +1,46 @@
+{
+  "port": 9231,
+  "version": {
+    "Browser": "Anki/26.9.3.1",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/6.11.2 Chrome/140.0.0.0 Safari/537.36",
+    "V8-Version": "14.0.365.10",
+    "WebKit-Version": "537.36 (@aa324b3754009b927f7db643b2e837d6a5383b04)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9231/devtools/browser/4aaeb41c-84bf-482f-b886-5d87136d33f5"
+  },
+  "first_seen_after_s": 1.7,
+  "targets": [
+    {
+      "description": "",
+      "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@aa324b3754009b927f7db643b2e837d6a5383b04/inspector.html?ws=127.0.0.1:9231/devtools/page/CC9AAAE0A353BD8A633B967079C2E178",
+      "faviconUrl": "http://127.0.0.1:50232/favicon.ico",
+      "id": "CC9AAAE0A353BD8A633B967079C2E178",
+      "title": "bottom toolbar",
+      "type": "page",
+      "url": "http://127.0.0.1:50232/_anki/legacyPageData?id=2441442757520",
+      "webSocketDebuggerUrl": "ws://127.0.0.1:9231/devtools/page/CC9AAAE0A353BD8A633B967079C2E178"
+    },
+    {
+      "description": "",
+      "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@aa324b3754009b927f7db643b2e837d6a5383b04/inspector.html?ws=127.0.0.1:9231/devtools/page/80D5607675932BC7E22C3B7A14ECB405",
+      "faviconUrl": "http://127.0.0.1:50232/favicon.ico",
+      "id": "80D5607675932BC7E22C3B7A14ECB405",
+      "title": "main webview",
+      "type": "page",
+      "url": "http://127.0.0.1:50232/_anki/legacyPageData?id=2441442755600",
+      "webSocketDebuggerUrl": "ws://127.0.0.1:9231/devtools/page/80D5607675932BC7E22C3B7A14ECB405"
+    },
+    {
+      "description": "",
+      "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@aa324b3754009b927f7db643b2e837d6a5383b04/inspector.html?ws=127.0.0.1:9231/devtools/page/1B74A7931BCC5F3BDCD3FD31B28BD490",
+      "faviconUrl": "http://127.0.0.1:50232/favicon.ico",
+      "id": "1B74A7931BCC5F3BDCD3FD31B28BD490",
+      "title": "top toolbar",
+      "type": "page",
+      "url": "http://127.0.0.1:50232/_anki/legacyPageData?id=2441442285584",
+      "webSocketDebuggerUrl": "ws://127.0.0.1:9231/devtools/page/1B74A7931BCC5F3BDCD3FD31B28BD490"
+    }
+  ],
+  "exit_code": 0,
+  "wall_seconds": 32.7
+}

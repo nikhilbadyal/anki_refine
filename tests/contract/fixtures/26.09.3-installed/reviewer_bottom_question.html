@@ -1,0 +1,46 @@
+<html class="night-mode" dir="ltr" data-bs-theme="dark"><head>
+    <title>bottom toolbar</title>
+<base href="http://127.0.0.1:PORT/"><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/webview.css"><style>
+body { zoom: 1; background-color: var(--canvas); }
+html { font-family:"Segoe UI"; }
+:root.system-font-size, :root.night-mode.system-font-size { font-size: 12.0px; --bs-body-font-size: 12.0px; --font-size: 12.0px; }
+
+button { font-family: "Segoe UI"; }
+            
+:root { --canvas: #f5f5f5 }
+:root[class*=night-mode] { --canvas: #2c2c2c }
+</style><link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/toolbar-bottom.css">
+<link rel="stylesheet" type="text/css" href="http://127.0.0.1:PORT/_anki/css/reviewer-bottom.css">
+</head>
+
+<body class="isWin nightMode night_mode reduce-motion fancy">
+<script src="http://127.0.0.1:PORT/_anki/js/webview.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/vendor/jquery.min.js"></script>
+<script src="http://127.0.0.1:PORT/_anki/js/reviewer-bottom.js"></script>
+
+<center id="outer">
+<table id="innertable" width="100%" cellspacing="0" cellpadding="0">
+<tbody><tr>
+<td align="start" valign="top" class="stat">
+<button title="Shortcut key: ⁨E⁩" onclick="pycmd('edit');">Edit</button></td>
+<td align="center" valign="top" id="middle"><table cellpadding="0"><tbody><tr><td class="stat2" align="center">
+<button title="Shortcut key: ⁨Space⁩" id="ansbut" onclick="pycmd(&quot;ans&quot;);">Show Answer<span class="stattxt">
+<span class="new-count"><u>4</u></span> +
+<span class="learn-count">0</span> +
+<span class="review-count">1</span>
+</span></button></td></tr></tbody></table></td>
+<td align="end" valign="top" class="stat">
+<button title="Shortcut key: ⁨M⁩" onclick="pycmd('more');">
+More ▼
+<span id="time" class="stattxt"></span>
+</button>
+</td>
+</tr>
+</tbody></table>
+</center>
+<script>
+time = 0;
+timerStopped = false;
+</script>
+
+</body></html>
