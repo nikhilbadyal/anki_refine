@@ -154,6 +154,7 @@ class Probe:
             ]
         steps.append(("cards", self.step_cards))
         steps.append(("study_buttons", self.step_study_buttons))
+        steps.append(("congrats", self.step_congrats))
         steps.append(("finish", self.step_finish))
         self.chain(steps)
 
@@ -393,6 +394,26 @@ class Probe:
 
         self.wait_for("deck_browser_did_render", hero, 10_000)
         mw.moveToState("deckBrowser")
+
+    # The "finished this deck" screen (SvelteKit page in the overview).
+    def step_congrats(self, nxt: Next) -> None:
+        mw = _mw()
+        did = mw.col.decks.id_for_name("M0 Empty")
+        if not did:
+            self.r["shots"]["congrats"] = {"skipped": "no M0 Empty deck"}
+            nxt()
+            return
+        mw.col.decks.select(did)
+
+        def shoot() -> None:
+            for theme in ("light", "dark"):
+                pass
+            self.shoot("dark" if mw.pm.theme() else "light", "congrats")
+            self.wait_for("deck_browser_did_render", nxt, 10_000)
+            mw.moveToState("deckBrowser")
+
+        mw.moveToState("overview")
+        self.later(2500, shoot)
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()

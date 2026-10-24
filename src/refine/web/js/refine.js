@@ -12,6 +12,14 @@
       if (cardsOnly && !/^rf-(cards|furigana)-/.test(k)) return;
       d.classList.toggle(k, !!p.flags[k]);
     });
+    // pages that reset <html> classes keep a wanted-list (see overview.py)
+    if (window.rfKeep) {
+      window.rfKeep = window.rfKeep.filter(function (k) {
+        return !(k in p.flags) || p.flags[k];
+      }).concat(Object.keys(p.flags).filter(function (k) {
+        return p.flags[k] && window.rfKeep.indexOf(k) < 0 && /^(refine|rf-s-overview)$/.test(k);
+      }));
+    }
     if (p.tokens && p.styleId && !cardsOnly) {
       var s = document.getElementById(p.styleId);
       if (!s) {

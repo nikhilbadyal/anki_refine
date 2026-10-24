@@ -1,0 +1,34 @@
+/* "Congratulations! You have finished this deck" (SvelteKit page).
+   Plain element selectors only: the page's own classes are build output. */
+
+html.refine.rf-s-overview.rf-page-congrats body {
+  background: var(--rf-bg);
+  color: var(--rf-text);
+  font-family: var(--rf-font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+html.refine.rf-s-overview.rf-page-congrats h1,
+html.refine.rf-s-overview.rf-page-congrats h2,
+html.refine.rf-s-overview.rf-page-congrats h3 {
+  font-family: var(--rf-font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--rf-text);
+}
+html.refine.rf-s-overview.rf-page-congrats p,
+html.refine.rf-s-overview.rf-page-congrats li {
+  color: var(--rf-text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+html.refine.rf-s-overview.rf-page-congrats a { color: var(--rf-accent-text); }
+html.refine.rf-s-overview.rf-page-congrats button {
+  font-family: var(--rf-font-ui);
+  background: var(--rf-primary-bg);
+  color: var(--rf-primary-fg);
+  border: 0;
+  border-radius: var(--rf-radius-m);
+  padding: 10px 18px;
+  font-weight: 600;
+}
