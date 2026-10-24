@@ -93,11 +93,50 @@ QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QTextEdit:focus, QPlainTextEdi
 }
 """
 
+# Card browser only, addressed by Anki's own object/class names so other
+# dialogs and add-on windows are untouched. Row selection and flag/marked/
+# suspended row colours stay Anki's: they carry meaning.
+_BROWSER = """
+QTableView#tableView {
+    background: %(surface)s;
+    alternate-background-color: %(bg)s;
+    gridline-color: %(border)s;
+    border: 1px solid %(border)s;
+    border-radius: 8px;
+}
+QTableView#tableView QHeaderView::section {
+    background: %(surface)s;
+    color: %(text_muted)s;
+    border: none;
+    border-bottom: 1px solid %(border)s;
+    border-right: 1px solid %(border)s;
+    padding: 5px 8px;
+    font-weight: 600;
+}
+SidebarTreeView {
+    background: %(bg)s;
+    border: none;
+}
+SidebarTreeView::item {
+    padding: 3px 2px;
+    border-radius: 6px;
+}
+SidebarTreeView::item:hover {
+    background: %(surface_hover)s;
+}
+SidebarTreeView::item:selected {
+    background: %(surface_active)s;
+    color: %(text)s;
+}
+"""
+
 
 def render(tok: Dict[str, str]) -> str:
-    body = _TEMPLATE % {
+    body = (_TEMPLATE + _BROWSER) % {
         "bg": tok["bg"],
         "surface": tok["surface"],
+        "surface_active": tok["surface-active"],
+        "text_muted": tok["text-muted"],
         "surface_hover": tok["surface-hover"],
         "border": tok["border"],
         "border_strong": tok["border-strong"],

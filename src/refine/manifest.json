@@ -1,8 +1,8 @@
 {
   "package": "refine",
-  "name": "Refine (dev)",
+  "name": "Refine",
   "conflicts": [],
   "min_point_version": 250900,
   "max_point_version": 260903,
-  "human_version": "0.0.0-m0"
+  "human_version": "0.1.0"
 }

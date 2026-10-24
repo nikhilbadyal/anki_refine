@@ -38,6 +38,8 @@ ADDON_SRC = ROOT / "src" / "refine"
 PROBE_SRC = ROOT / "devtools" / "m0_probe"
 UI_OUT = ROOT / "out" / "ui"
 UI_PROBE_SRC = ROOT / "devtools" / "ui_probe"
+VERIFY_OUT = ROOT / "out" / "verify"
+BEHAVIOR_PROBE_SRC = ROOT / "devtools" / "behavior_probe"
 IS_WIN = sys.platform == "win32"
 
 
@@ -172,7 +174,9 @@ def _seed_prefs(target: Target, base: Path) -> None:
         raise SystemExit(f"profile pre-seed failed:\n{res.stdout}\n{res.stderr}")
 
 
-def setup(target: Target, fresh: bool, probe: bool, probes: tuple[tuple[str, Path], ...] = ()) -> Path:
+def setup(
+    target: Target, fresh: bool, probe: bool, probes: tuple[tuple[str, Path], ...] = (), refine: bool = True
+) -> Path:
     """probes: extra (link name, devtools folder) pairs to link into addons21."""
     base = DEV_BASE / target.name
     if fresh and base.exists():
@@ -180,7 +184,11 @@ def setup(target: Target, fresh: bool, probe: bool, probes: tuple[tuple[str, Pat
     addons = base / "addons21"
     addons.mkdir(parents=True, exist_ok=True)
     _seed_prefs(target, base)
-    _link(addons / "refine", ADDON_SRC)
+    refine_link = addons / "refine"
+    if refine:
+        _link(refine_link, ADDON_SRC)
+    elif _is_link(refine_link):
+        _unlink(refine_link)
     probe_link = addons / "refine_m0_probe"
     if probe:
         _link(probe_link, PROBE_SRC)
@@ -207,6 +215,8 @@ def _env(target: Target, port: int, out: Path | None) -> dict[str, str]:
     env.pop("REFINE_M0_AUTOQUIT", None)
     env.pop("REFINE_UI_OUT", None)
     env.pop("REFINE_UI_AUTOQUIT", None)
+    env.pop("REFINE_BEHAVIOR_OUT", None)
+    env.pop("REFINE_BEHAVIOR_AUTOQUIT", None)
     if out is not None:
         env["REFINE_M0_OUT"] = str(out)
         env["REFINE_M0_AUTOQUIT"] = "1"
@@ -340,6 +350,58 @@ def shots(target: Target, keep_profile: bool, timeout_s: int = 300, colpkg: Path
             proc.wait(timeout=30)
     print(f"{target.name}: exit={proc.returncode} in {round(time.time() - started, 1)} s")
     return sorted(out.glob("*.png"))
+
+
+def verify(target: Target, without_refine: bool, timeout_s: int = 420) -> Path:
+    """Behaviour probe in a fresh isolated profile; writes out/verify/<target>[-norefine]/verify.json."""
+    out = VERIFY_OUT / (target.name + ("-norefine" if without_refine else ""))
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+    base = setup(
+        target,
+        fresh=True,
+        probe=False,
+        probes=(("refine_behavior_probe", BEHAVIOR_PROBE_SRC),),
+        refine=not without_refine,
+    )
+    env = _env(target, 0, None)
+    env.pop("QTWEBENGINE_REMOTE_DEBUGGING", None)
+    env["REFINE_BEHAVIOR_OUT"] = str(out)
+    env["REFINE_BEHAVIOR_AUTOQUIT"] = "1"
+    started = time.time()
+    with (out / "anki-console.log").open("w", encoding="utf-8", errors="replace") as log:
+        proc = subprocess.Popen(_cmd(target, base), env=env, stdout=log, stderr=subprocess.STDOUT)
+        try:
+            proc.wait(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            print(f"{target.name}: timed out after {timeout_s} s, killing")
+            proc.kill()
+            proc.wait(timeout=30)
+    print(f"{target.name}{' (no refine)' if without_refine else ''}: exit={proc.returncode} in {round(time.time() - started, 1)} s")
+    return out / "verify.json"
+
+
+def _verify_summary(name: str) -> dict | None:
+    p = VERIFY_OUT / name / "verify.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+
+
+def verify_report(target: Target) -> None:
+    on, off = _verify_summary(target.name), _verify_summary(target.name + "-norefine")
+    for label, d in (("with Refine", on), ("without Refine", off)):
+        if not d:
+            print(f"[{label}] no verify.json")
+            continue
+        print(f"[{label}] anki={d.get('anki')} errors={len(d.get('errors', []))}")
+        for c in d["checks"]:
+            detail = "" if c["result"] == "PASS" else f"  {str(c['detail'])[:160]}"
+            print(f"  {c['result']:4} {c['id']}{detail}")
+    if on and off:
+        for k in sorted(set(on["hashes"]) | set(off["hashes"])):
+            a, b = on["hashes"].get(k), off["hashes"].get(k)
+            same = bool(a and b and a["sha256"] == b["sha256"] and a["size"] == b["size"])
+            print(f"  card-area {k}: {'IDENTICAL' if same else 'DIFFERENT'}")
 
 
 # Anki's own "aqt[qt]" extra pins the exact PyQt/QtWebEngine of each release.
@@ -532,6 +594,9 @@ def main() -> None:
     sh.add_argument("--keep-profile", action="store_true")
     sh.add_argument("--colpkg", type=Path, help="restore this .colpkg backup into the isolated profile (read-only use)")
     sh.add_argument("--tag", default="", help="suffix for the output folder, e.g. 'real'")
+    vf = sub.add_parser("verify")
+    vf.add_argument("target", choices=TARGETS)
+    vf.add_argument("--without-refine", action="store_true", help="do not link the Refine add-on (baseline run)")
     sub.add_parser("report")
     a = ap.parse_args()
 
@@ -571,6 +636,12 @@ def main() -> None:
             print(f"{name}: capturing screenshots ...", flush=True)
             for png in shots(t, a.keep_profile, colpkg=a.colpkg, tag=a.tag):
                 print(f"  {png}")
+    elif a.cmd == "verify":
+        t = TARGETS[a.target]
+        if not t.available():
+            raise SystemExit(f"{a.target}: not installed")
+        verify(t, a.without_refine)
+        verify_report(t)
     elif a.cmd == "report":
         print(report())
 

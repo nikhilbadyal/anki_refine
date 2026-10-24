@@ -1,0 +1,1 @@
+{"config": {"schema_version": 1, "enabled": true, "accent": "jade", "density": "comfortable", "surfaces": {"toolbar": true, "deck_browser": true, "overview": true, "reviewer": true, "qt_chrome": true}, "reviewer": {"ease_colors": true}, "home": {"hero": true, "today": true, "activity": true, "forecast": true}}}

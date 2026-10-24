@@ -148,6 +148,8 @@ class Probe:
                 (f"{theme}:reviewer_answer", lambda n, t=theme: self.step_answer(t, n)),
                 (f"{theme}:back", self.step_back),
                 (f"{theme}:settings", lambda n, t=theme: self.step_settings(t, n)),
+                (f"{theme}:menu", lambda n, t=theme: self.step_menu(t, n)),
+                (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
         steps.append(("finish", self.step_finish))
@@ -337,6 +339,48 @@ class Probe:
 
         self.later(800, grab)
         mod.open_settings(self.ctx)
+
+    # Qt-side styling (QSS): an open Tools menu and the card browser window.
+    def step_menu(self, theme: str, nxt: Next) -> None:
+        from aqt.qt import QPoint
+
+        mw = _mw()
+        name = f"{theme}_menu_tools"
+        menu = mw.form.menuTools
+
+        def grab() -> None:
+            try:
+                menu.grab().save(str(self.out / f"{name}.png"), "PNG")
+                self.r["shots"][name] = {"file": f"{name}.png", "method": "menu.grab"}
+            except Exception:
+                self.err(f"shoot:{name}")
+            menu.hide()
+            self.later(SETTLE_MS, nxt)
+
+        menu.popup(mw.mapToGlobal(QPoint(150, 24)))
+        self.later(700, grab)
+
+    def step_browser(self, theme: str, nxt: Next) -> None:
+        import aqt
+
+        mw = _mw()
+        name = f"{theme}_browser"
+        browser = aqt.dialogs.open("Browser", mw)
+
+        def grab() -> None:
+            try:
+                browser.resize(1280, 760)
+                browser.grab().save(str(self.out / f"{name}.png"), "PNG")
+                self.r["shots"][name] = {"file": f"{name}.png", "method": "browser.grab"}
+            except Exception:
+                self.err(f"shoot:{name}")
+            try:
+                browser.close()
+            except Exception:
+                self.err(f"close:{name}")
+            self.later(1500, nxt)
+
+        self.later(2500, grab)
 
     def step_narrow(self, theme: str, nxt: Next) -> None:
         mw = _mw()
