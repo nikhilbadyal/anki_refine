@@ -11,6 +11,7 @@ First installable build. Visual direction from the "Anki Revamp" design: warm ne
 - Card browser: table, header and sidebar in the same palette (Anki's row, flag and selection colours are kept).
 - The "finished this deck" screen, Statistics and Deck Options follow the palette and fonts (colours and fonts only; their layout is Anki's). Can be turned off separately.
 - A Study button on each deck row with cards waiting; a welcome with create / import / shared-deck actions for a new, empty collection.
+- Optional daily goal (cards per day) shown as progress in the Today panel.
 - Optional, off by default: Japanese reading polish for card content (Japanese font for `lang="ja"` text, tidy furigana, furigana on hover / answer side). Zero-specificity rules, so note-type styling always wins.
 - Home screen panels: cards-waiting headline with per-deck Study button and pace estimate, Today, 26-week Activity heatmap with current and best streak, and a Next 7 days forecast. All figures are read-only queries (manual and rescheduled review entries are excluded, matching Anki's own "studied today").
 - Eight accent colours, comfortable and compact density, optional ease colours on answer buttons.

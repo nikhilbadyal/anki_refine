@@ -17,6 +17,11 @@ The friendlier way to change these is **Tools ▸ Refine ▸ Settings…**. Edit
   - `today`: cards studied and time spent today.
   - `activity`: 26-week activity heatmap with your streak.
   - `forecast`: cards due over the next 7 days.
+- `daily_goal` (number, default 0): cards per day shown as progress in the Today panel. 0 means no goal.
+- `cards`: optional card-content polish, both off by default:
+  - `japanese`: Japanese font for text your note type marks as Japanese (`lang="ja"`) and tidier furigana. Your note type's styling still wins.
+  - `furigana_hover`: hide furigana until you hover it or reveal the answer (needs `japanese`).
+- `surfaces.pages`: Statistics, Deck Options and the "finished this deck" screen use Refine's colours and fonts.
 - `schema_version`: internal; do not edit.
 
 If a screen misbehaves, set its entry under `surfaces` to false. Refine also does this by itself if a screen raises an error.
