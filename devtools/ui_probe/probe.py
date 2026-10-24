@@ -419,17 +419,43 @@ class Probe:
             self.r["shots"]["congrats"] = {"skipped": "no M0 Empty deck"}
             nxt()
             return
-        mw.col.decks.select(did)
+
+        def answered_some() -> None:
+            mw.col.decks.select(did)
+            mw.moveToState("overview")
+            self.later(4000, shoot)
+
+        # answer a few cards first (seeded profile only) so the session
+        # summary has something to show
+        answers = {"left": 3}
+
+        def answer_next() -> None:
+            if answers["left"] <= 0 or mw.state != "review":
+                answered_some()
+                return
+            answers["left"] -= 1
+            self.wait_for("reviewer_did_answer_card", answer_next, 8000)
+            self.wait_for("reviewer_did_show_answer", lambda: mw.reviewer.bottom.web.eval('pycmd("ease3")'), 8000)
+            mw.reviewer.bottom.web.eval('pycmd("ans")')
 
         def shoot() -> None:
             for theme in ("light", "dark"):
                 pass
             self.shoot("dark" if mw.pm.theme() else "light", "congrats")
+            mw.web.evalWithCallback(
+                "(function(){var e=document.querySelector('.rf-session');return e?e.textContent:null;})()",
+                lambda v: self.r.__setitem__("session_summary", v),
+            )
             self.wait_for("deck_browser_did_render", nxt, 10_000)
             mw.moveToState("deckBrowser")
 
-        mw.moveToState("overview")
-        self.later(2500, shoot)
+        probe = mw.col.decks.id_for_name("M0 Probe")
+        if probe:
+            mw.col.decks.select(probe)
+            self.wait_for("reviewer_did_show_question", answer_next, 8000)
+            mw.moveToState("review")
+        else:
+            answered_some()
 
     # Separate SvelteKit windows: Statistics and Deck Options.
     def step_window(self, which: str, nxt: Next) -> None:

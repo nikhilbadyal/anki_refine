@@ -2,9 +2,14 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
-## Unreleased
+## [0.2.4] - 2026-10-24
 
-- Reviewer: redesigned answer buttons (interval inside the button, tinted Again/Good); by default only Again and Good show (keys 2 and 4 still work), switchable in Settings.
+### Added
+- **Retention column** in the deck list (as in the design): reviews remembered in the last 30 days, Anki's true-retention definition, including subdecks; amber below 85%, "—" with fewer than 20 reviews.
+- **Session summary** on the "finished this deck" screen: today's cards, time and share of reviews correct, tomorrow's load and your streak, in one sentence.
+
+### Fixed
+- Header titles on the congrats and Stats screens use the interface font.
 
 ## [0.2.3] - 2026-10-24
 

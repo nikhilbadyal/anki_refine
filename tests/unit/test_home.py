@@ -207,7 +207,11 @@ class Queries(unittest.TestCase):
     def test_collect(self):
         n = home.STREAK_DAYS
         db = FakeDB(
-            all_rows={"from revlog": [(n - 1, 3), (n - 2, 1), (n - 3, 1)], "from cards": [(100, 2)]},
+            all_rows={
+                "join cards": [(1, 0, 40, 36), (2, 1, 10, 9)],  # retention: did, odid, total, passed
+                "from revlog": [(n - 1, 3), (n - 2, 1), (n - 3, 1)],
+                "from cards": [(100, 2)],
+            },
             scalar={"avg(time)": 4500.0, "from cards": 1},
             first=(7, 61_000),
         )
@@ -218,10 +222,14 @@ class Queries(unittest.TestCase):
         self.assertEqual((s.streak, s.best_streak), (3, 3))
         self.assertEqual(s.forecast[0], 3)
         self.assertEqual(s.avg_ms, 4500.0)
-        revlog_sql = [c[1] for c in db.calls if "from revlog" in c[1]]
+        # card-count queries exclude Manual/Rescheduled entries; the review-
+        # only queries (type = 1) exclude them by construction
+        revlog_sql = [c[1] for c in db.calls if "from revlog" in c[1] and "type = 1" not in c[1]]
         self.assertEqual(len(revlog_sql), 3)
         for sql in revlog_sql:
             self.assertIn("type not in (4, 5)", sql)
+        # filtered-deck review (odid 1) counts toward its home deck 1
+        self.assertEqual(s.retention, {1: (45, 50)})
         self.assertEqual(db.calls[0][2], ((self.CUT - DAY) * 1000,))
 
 
@@ -251,6 +259,35 @@ class TodayGoal(unittest.TestCase):
         out = home.today_html(s, t)
         self.assertIn('aria-valuenow="25"', out)
         self.assertIn("7 for tomorrow", out)
+
+
+class Retention(unittest.TestCase):
+    def test_aggregate_includes_subdecks_and_min_reviews(self):
+        child = node(deck_id=11, name="child")
+        parent = node(deck_id=10, name="parent", children=[child])
+        lonely = node(deck_id=20, name="lonely")
+        root = node(deck_id=0, children=[parent, lonely])
+        raw = {10: (9, 10), 11: (27, 30), 20: (5, 5)}
+        out = home.aggregate_retention(root, raw)
+        self.assertEqual(out[10], 90)  # (9 + 27) / (10 + 30)
+        self.assertEqual(out[11], 90)
+        self.assertIsNone(out[20])  # 5 reviews < minimum
+        self.assertNotIn(0, out)
+
+
+class SessionSummary(unittest.TestCase):
+    def test_sentence(self):
+        s = HomeStats(today_cards=84, today_ms=21 * 60_000, today_passed=46, today_reviews=50,
+                      forecast=[0, 160], streak=12)
+        out = home.session_summary_html(s)
+        self.assertIn("84</b> cards", out)
+        self.assertIn("21 min", out)
+        self.assertIn("92%", out)
+        self.assertIn("160", out)
+        self.assertIn("12</b>-day streak", out)
+
+    def test_nothing_studied(self):
+        self.assertEqual(home.session_summary_html(HomeStats()), "")
 
 
 if __name__ == "__main__":

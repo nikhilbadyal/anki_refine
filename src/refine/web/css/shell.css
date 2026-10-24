@@ -115,6 +115,8 @@ html.refine .rf-header {
   text-align: start;
 }
 html.refine .rf-header-title { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+/* specific enough to win over page-level heading rules (congrats, stats) */
+html.refine.rf-s-sidebar body .rf-header h1,
 html.refine .rf-header h1 {
   margin: 0;
   font: 600 18px var(--rf-font-ui);

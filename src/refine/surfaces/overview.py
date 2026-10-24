@@ -41,3 +41,25 @@ class OverviewSurface(WebSurface):
         if not (cfg.get("enabled") and cfg["surfaces"].get(self.id)):
             return
         inject_page(ctx, web, self.id, "congrats", ("congrats.css",))
+        self._session_summary(ctx, web)
+
+    def _session_summary(self, ctx: Any, web: Any) -> None:
+        """Today's session in one sentence under Anki's congratulations,
+        computed off the main thread from Anki's review log."""
+        import json
+
+        from aqt.operations import QueryOp
+
+        from .. import home
+
+        def show(stats: Any) -> None:
+            markup = home.session_summary_html(stats)
+            if markup and "congrats" in web.url().toString():
+                web.eval(
+                    "(function(h){if(document.querySelector('.rf-session'))return;"
+                    f"document.body.insertAdjacentHTML('beforeend',h);}})({json.dumps(markup)});"
+                )
+
+        QueryOp(parent=ctx.mw, op=home.collect, success=ctx.guard.wrap(self.id, show)).failure(
+            lambda err: ctx.log.error("session summary failed: %r", err)
+        ).run_in_background()

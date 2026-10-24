@@ -40,6 +40,8 @@ class DeckBrowserSurface(WebSurface):
         # "nothing selected" is possible even though Anki always has a current deck
         self._selected: int | None = None
         self._avg_ms = 0.0
+        self._retention_raw: dict = {}  # deck id -> (passed, total), last query
+        self._tree = None
 
     def flags(self, cfg: dict) -> dict[str, bool]:
         h = cfg.get("home", {})
@@ -74,6 +76,7 @@ class DeckBrowserSurface(WebSurface):
         if tree is None:
             tree = ctx.mw.col.sched.deck_due_tree()
         self._totals = home.totals(tree)
+        self._tree = tree
         decks = self._deck_counts(tree)
         if self._selected not in decks:
             self._selected = None  # deck deleted or filtered away
@@ -101,6 +104,7 @@ class DeckBrowserSurface(WebSurface):
             "all": {"new": self._totals.new, "learn": self._totals.learn, "review": self._totals.review},
             "selected": self._selected,
             "avgMs": self._avg_ms,
+            "retention": self._retention_pct(),
         }
         # data for refine.js, which switches the headline in place on click
         blob = json.dumps(data).replace("</", "<\\/")
@@ -110,6 +114,12 @@ class DeckBrowserSurface(WebSurface):
             + home.side_placeholder(self._panels)
             + content.stats
         )
+
+    def _retention_pct(self) -> dict[str, int | None]:
+        if self._tree is None or not self._retention_raw:
+            return {}
+        agg = home.aggregate_retention(self._tree, self._retention_raw)
+        return {str(k): v for k, v in agg.items()}
 
     @staticmethod
     def _deck_counts(tree: Any) -> dict[int, dict]:
@@ -159,6 +169,9 @@ class DeckBrowserSurface(WebSurface):
             changed = {k: v for k, v in payload.items() if self._panels.get(k) != v}
             if stats.avg_ms != self._avg_ms:
                 changed["avgMs"] = stats.avg_ms
+            if stats.retention != self._retention_raw:
+                self._retention_raw = stats.retention
+                changed["retention"] = self._retention_pct()
             self._panels, self._panels_key, self._avg_ms = payload, key, stats.avg_ms
             if changed:  # only touch the page if something differs
                 ctx.mw.web.eval(f"window.rfFillHome && window.rfFillHome({json.dumps(changed)});")

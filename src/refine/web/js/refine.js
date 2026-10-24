@@ -42,6 +42,13 @@
         window.rfSetAvgMs(p.avgMs);
         return;
       }
+      if (key === "retention") {
+        if (deckData) {
+          deckData.retention = p.retention;
+          renderRetention();
+        }
+        return;
+      }
       var el = document.querySelector('[data-rf-fill="' + key + '"]');
       if (el) el.innerHTML = p[key];
     });
@@ -156,6 +163,41 @@
     }
   };
 
+  // Retention column: Anki's true retention over the last 30 days (review
+  // answers that weren't Again), including subdecks; "—" when too few.
+  function renderRetention() {
+    if (!deckData) return;
+    var map = deckData.retention || {};
+    var cells = document.querySelectorAll("td.rf-ret");
+    for (var i = 0; i < cells.length; i++) {
+      var cell = cells[i];
+      var id = cell.parentNode.id;
+      var pct = map[id];
+      cell.textContent = "";
+      if (pct === undefined || pct === null) {
+        var none = document.createElement("span");
+        none.className = "rf-ret-val rf-ret-none";
+        none.textContent = "—";
+        none.title = "Not enough reviews in the last 30 days";
+        cell.appendChild(none);
+        continue;
+      }
+      var bar = document.createElement("span");
+      bar.className = "rf-ret-bar" + (pct < 85 ? " rf-ret-low" : "");
+      bar.setAttribute("aria-hidden", "true");
+      var fill = document.createElement("i");
+      // 60-100% scale, as in the design: differences that matter stay visible
+      fill.style.width = Math.max(4, Math.min(100, (pct - 60) * 2.5)) + "%";
+      bar.appendChild(fill);
+      var val = document.createElement("span");
+      val.className = "rf-ret-val";
+      val.textContent = pct + "%";
+      cell.title = pct + "% of reviews remembered (last 30 days)";
+      cell.appendChild(bar);
+      cell.appendChild(val);
+    }
+  }
+
   function isControl(el) {
     return !!(el && el.closest && el.closest("button, a.collapse, td.opts, input, label, select, textarea"));
   }
@@ -215,6 +257,11 @@
         });
       })(tr.id, tr, link);
       var opts = tr.querySelector("td.opts");
+      if (opts && !tr.querySelector("td.rf-ret")) {
+        var ret = document.createElement("td");
+        ret.className = "rf-ret";
+        tr.insertBefore(ret, opts);
+      }
       if (opts) {
         var gear = opts.querySelector("a");
         if (gear) {
@@ -256,6 +303,17 @@
         opts.insertBefore(b, opts.firstChild);
       }
     }
+    var optsHead = document.querySelector("th.optscol");
+    if (optsHead && !document.querySelector("th.rf-ret-h")) {
+      var th = document.createElement("th");
+      th.className = "count rf-ret-h";
+      th.textContent = "Retention";
+      th.title = "Reviews remembered in the last 30 days";
+      optsHead.parentNode.insertBefore(th, optsHead);
+    }
+    var spacer = document.querySelector("tr.top-level-drag-row td");
+    if (spacer) spacer.colSpan = 7;
+    renderRetention();
     markSelected();
     // a click anywhere that isn't a deck row or a control clears the selection
     document.addEventListener("click", function (ev) {

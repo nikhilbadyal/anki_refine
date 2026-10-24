@@ -19,6 +19,9 @@ DAY = 86400
 ACTIVITY_DAYS = 182  # 26 weeks
 STREAK_DAYS = 3 * 365
 EXCLUDED_TYPES = "(4, 5)"
+RETENTION_DAYS = 30
+# below this many review answers a retention figure is noise, so show "—"
+RETENTION_MIN_REVIEWS = 20
 
 
 @dataclass
@@ -42,6 +45,11 @@ class HomeStats:
     best_streak: int = 0
     forecast: list[int] = field(default_factory=list)  # today .. +6
     avg_ms: float = 0.0
+    # deck id -> (passed, total) review answers in the last RETENTION_DAYS,
+    # for the deck itself only (parents are aggregated with the tree)
+    retention: dict[int, tuple[int, int]] = field(default_factory=dict)
+    today_passed: int = 0  # today's review answers that weren't "Again"
+    today_reviews: int = 0
 
 
 # --------------------------------------------------------------- queries
@@ -106,6 +114,41 @@ def forecast(col: Any, days: int = 7) -> list[int]:
     return out
 
 
+def retention_by_deck(col: Any, days: int = RETENTION_DAYS) -> dict[int, tuple[int, int]]:
+    """True retention inputs per deck, Anki's definition: review answers
+    (revlog type 1) and how many of them weren't Again (ease > 1). Cards in
+    a filtered deck count toward their home deck (odid)."""
+    start = (col.sched.day_cutoff - days * DAY) * 1000
+    out: dict[int, tuple[int, int]] = {}
+    for did, odid, total, passed in col.db.all(
+        "select c.did, c.odid, count(), sum(r.ease > 1) from revlog r "
+        "join cards c on c.id = r.cid where r.id > ? and r.type = 1 group by c.did, c.odid",
+        start,
+    ):
+        home = int(odid or did)
+        p, t = out.get(home, (0, 0))
+        out[home] = (p + int(passed or 0), t + int(total or 0))
+    return out
+
+
+def aggregate_retention(tree: Any, raw: dict[int, tuple[int, int]]) -> dict[int, int | None]:
+    """Percent per deck including its subdecks; None when there are too few
+    reviews for a meaningful figure."""
+    out: dict[int, int | None] = {}
+
+    def walk(node: Any) -> tuple[int, int]:
+        p, t = raw.get(int(node.deck_id), (0, 0))
+        for c in node.children:
+            cp, ct = walk(c)
+            p, t = p + cp, t + ct
+        if int(node.deck_id):
+            out[int(node.deck_id)] = round(100 * p / t) if t >= RETENTION_MIN_REVIEWS else None
+        return p, t
+
+    walk(tree)
+    return out
+
+
 def collect(col: Any) -> HomeStats:
     s = HomeStats()
     cutoff = col.sched.day_cutoff
@@ -114,6 +157,12 @@ def collect(col: Any) -> HomeStats:
         (cutoff - DAY) * 1000,
     )
     s.today_cards, s.today_ms = int(row[0]), int(row[1])
+    passed_total = col.db.first(
+        "select coalesce(sum(ease > 1), 0), count() from revlog where id > ? and type = 1",
+        (cutoff - DAY) * 1000,
+    )
+    s.today_passed, s.today_reviews = int(passed_total[0]), int(passed_total[1])
+    s.retention = retention_by_deck(col)
     long = daily_counts(col, STREAK_DAYS)
     s.activity = long[-ACTIVITY_DAYS:]
     s.streak, s.best_streak = streaks(long)
@@ -290,6 +339,26 @@ def forecast_html(s: HomeStats, today: datetime.date | None = None) -> str:
             f'<span class="rf-mono rf-faint">{label}</span></div>'
         )
     return f'<div class="rf-bars" role="img" aria-label="Cards due over the next 7 days">{"".join(bars)}</div>'
+
+
+def session_summary_html(s: HomeStats) -> str:
+    """One calm sentence for the "finished this deck" screen, from Anki's
+    own review log; no badges, no fireworks."""
+    if not s.today_cards:
+        return ""
+    parts = [f"<b>{fmt_int(s.today_cards)}</b> card{'s' if s.today_cards != 1 else ''} in <b>{fmt_duration(s.today_ms)}</b>"]
+    if s.today_reviews >= 5:
+        parts.append(f"<b>{round(100 * s.today_passed / s.today_reviews)}%</b> of reviews correct")
+    sentence = "Today: " + ", ".join(parts) + "."
+    extra = []
+    if len(s.forecast) > 1:
+        tomorrow = s.forecast[1]
+        extra.append(f"Tomorrow ≈ <b>{fmt_int(tomorrow)}</b> due" if tomorrow else "Nothing due tomorrow")
+    if s.streak > 1:
+        extra.append(f"<b>{s.streak}</b>-day streak")
+    if extra:
+        sentence += " " + " · ".join(extra) + "."
+    return f'<section class="rf-session" aria-label="Today’s session"><p>{sentence}</p></section>'
 
 
 def pace_text(t: Totals, s: HomeStats) -> str:

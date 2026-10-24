@@ -310,3 +310,29 @@ html.refine .rf-hero-action { display: flex; align-items: center; min-height: 46
 html.refine .rf-hero-action:has(> .rf-hero-hint) { min-height: 0; padding-bottom: 1px; }
 html.refine .rf-hero-hint { font-size: var(--rf-text-s); }
 html.refine .rf-hero-scope { color: var(--rf-text); font-weight: 600; }
+
+/* ------------------------------------------------------ retention column */
+
+html.refine.rf-s-deck_browser th.rf-ret-h { width: 120px; text-align: start; padding-inline-start: 16px; }
+html.refine.rf-s-deck_browser td.rf-ret { padding-inline-start: 16px; white-space: nowrap; }
+html.refine.rf-s-deck_browser .rf-ret-bar {
+  display: inline-block;
+  width: 52px;
+  height: 4px;
+  margin-inline-end: 10px;
+  vertical-align: middle;
+  border-radius: 2px;
+  background: var(--rf-surface-active);
+  overflow: hidden;
+}
+html.refine.rf-s-deck_browser .rf-ret-bar > i { display: block; height: 100%; border-radius: 2px; background: var(--rf-accent); }
+html.refine.rf-s-deck_browser .rf-ret-bar.rf-ret-low > i { background: var(--rf-hard); }
+html.refine.rf-s-deck_browser .rf-ret-val { font: 400 12.5px var(--rf-font-mono); color: var(--rf-text-muted); vertical-align: middle; }
+html.refine.rf-s-deck_browser .rf-ret-none { color: var(--rf-text-faint); }
+/* Refine's own column only exists with the deck-list surface */
+html:not(.rf-s-deck_browser) th.rf-ret-h,
+html:not(.rf-s-deck_browser) td.rf-ret { display: none; }
+@media (max-width: 1100px) {
+  html.refine.rf-s-deck_browser th.rf-ret-h,
+  html.refine.rf-s-deck_browser td.rf-ret { display: none; }
+}
