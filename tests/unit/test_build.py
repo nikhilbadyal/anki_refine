@@ -42,7 +42,10 @@ class BuildTests(unittest.TestCase):
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
     def test_name(self):
-        self.assertEqual(self.out1.name, "refine-0.1.0.ankiaddon")
+        import json
+
+        manifest = json.loads((ROOT / "src" / "refine" / "manifest.json").read_text("utf-8"))
+        self.assertEqual(self.out1.name, f"refine-{manifest['human_version']}.ankiaddon")
 
     def test_root_files_no_top_folder(self):
         self.assertIn("__init__.py", self.names)

@@ -17,6 +17,7 @@ Refine is an add-on for Anki Desktop that gives the home screen, deck overview, 
   - **Today**: cards studied and time spent, with a progress bar and a note about what is left for tomorrow.
   - **Activity**: a 26-week heatmap of reviews per day, with your current and best streak.
   - **Next 7 days**: a forecast of cards due each day.
+- **Sidebar navigation** like the design: Decks, Stats, Browse, Add cards, Deck options and Sync on the left, with a search and Add card header. **Statistics opens inside the main window** instead of a separate one. Can be turned off in Settings.
 - A **Study** button on every deck row with cards waiting, and a welcome with next steps when the collection is still empty.
 - Restyled **deck list**, **deck overview**, **top toolbar**, **reviewer answer bar** (optional ease colours on the Again / Hard / Good / Easy buttons), the card **browser**'s table and sidebar, and Qt menus and scrollbars.
 - **Optional, off by default: Japanese reading polish** for card content: a proper Japanese font for text your note type marks as Japanese (`lang="ja"`), tidier furigana, and furigana shown only on hover or on the answer side. Your note type's own styling always takes precedence.

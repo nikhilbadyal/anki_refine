@@ -11,6 +11,8 @@ The friendlier way to change these is **Tools ▸ Refine ▸ Settings…**. Edit
   - `overview`: the screen shown after you click a deck.
   - `reviewer`: the review screen and its answer bar.
   - `qt_chrome`: menus, scrollbars and other native widgets.
+  - `pages`: Statistics, Deck Options and the "finished this deck" screen use Refine's colours and fonts.
+  - `sidebar`: left sidebar and header on Home, Overview and Stats, with Statistics shown inside the main window. Off brings back the classic top toolbar and the Stats window.
 - `reviewer.ease_colors` (true/false, default true): colour the Again / Hard / Good / Easy buttons.
 - `home`: panels on the home screen (all default to true):
   - `hero`: the "cards waiting" headline with the Study button.
@@ -21,7 +23,6 @@ The friendlier way to change these is **Tools ▸ Refine ▸ Settings…**. Edit
 - `cards`: optional card-content polish, both off by default:
   - `japanese`: Japanese font for text your note type marks as Japanese (`lang="ja"`) and tidier furigana. Your note type's styling still wins.
   - `furigana_hover`: hide furigana until you hover it or reveal the answer (needs `japanese`).
-- `surfaces.pages`: Statistics, Deck Options and the "finished this deck" screen use Refine's colours and fonts.
 - `schema_version`: internal; do not edit.
 
 If a screen misbehaves, set its entry under `surfaces` to false. Refine also does this by itself if a screen raises an error.

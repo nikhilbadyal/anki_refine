@@ -2,6 +2,12 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.2.0] - 2026-10-24
+
+### Added
+- **Sidebar navigation** (on by default, "Sidebar navigation" in Settings): a left sidebar on Home, Overview and Stats with Decks, Stats, Browse, Add cards, Deck options (with shortcut hints), links other add-ons add to the toolbar, and Sync; plus a header with the screen title, a card search (opens the Browser; Ctrl+K focuses it) and Add card. Anki's top toolbar is hidden on these screens and comes back while reviewing. Narrow windows get an icon rail.
+- **Statistics inside the main window** (sidebar, the T key and the toolbar's Stats link), with a Save PDF button. It uses the same trusted page type as Anki's Stats window, so Anki's security rules for the main window are unchanged. Turn the sidebar off to get the separate Stats window back.
+
 ## [0.1.0] - 2026-10-24
 
 First installable build. Visual direction from the "Anki Revamp" design: warm neutrals, jade accent, Hanken Grotesk / Newsreader / JetBrains Mono (bundled, SIL OFL).
