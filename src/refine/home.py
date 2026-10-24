@@ -229,7 +229,9 @@ def forecast_html(s: HomeStats, today: datetime.date | None = None) -> str:
     peak = max(s.forecast) if s.forecast else 0
     bars = []
     for i, n in enumerate(s.forecast):
-        h = 4 if peak == 0 else max(4, round(100 * n / peak))
+        # square-root scale: today's overdue backlog would otherwise flatten
+        # every other day to nothing
+        h = 4 if peak == 0 or n == 0 else max(8, round(100 * math.sqrt(n / peak)))
         label = (today + datetime.timedelta(days=i)).strftime("%a")[:2]
         cls = "rf-bar rf-bar-now" if i == 0 else "rf-bar"
         bars.append(

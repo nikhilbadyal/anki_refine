@@ -196,6 +196,12 @@ class Probe:
         mw = _mw()
         col = mw.col
         seed: dict[str, Any] = {}
+        if os.environ.get("REFINE_UI_NOSEED") == "1":
+            # restored real collection: leave it as it is
+            seed["skipped"] = "REFINE_UI_NOSEED"
+            self.r["seed"] = seed
+            nxt()
+            return
         if col.decks.id_for_name("M0 Probe"):
             seed["skipped"] = "already seeded"
         else:
@@ -263,7 +269,15 @@ class Probe:
 
     def step_overview(self, theme: str, nxt: Next) -> None:
         mw = _mw()
-        mw.col.decks.select(mw.col.decks.id_for_name("M0 Probe"))
+        probe_deck = mw.col.decks.id_for_name("M0 Probe")
+        if probe_deck:
+            mw.col.decks.select(probe_deck)
+        else:
+            # real collection: the first top-level deck with cards waiting
+            for node in mw.col.sched.deck_due_tree().children:
+                if node.new_count + node.learn_count + node.review_count:
+                    mw.col.decks.select(node.deck_id)
+                    break
 
         def go() -> None:
             self.shoot(theme, "overview")

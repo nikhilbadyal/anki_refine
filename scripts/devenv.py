@@ -285,16 +285,50 @@ def snapshot(target: Target, port: int, timeout_s: int = 300) -> dict:
     return cdp
 
 
-def shots(target: Target, keep_profile: bool, timeout_s: int = 300) -> list[Path]:
-    out = UI_OUT / target.name
+_IMPORT_COLPKG = r"""
+import sys
+from anki._backend import RustBackend
+col_path, colpkg, media = sys.argv[1:4]
+RustBackend().import_collection_package(
+    col_path=col_path, backup_path=colpkg, media_folder=media, media_db=media + ".db2"
+)
+print("imported")
+"""
+
+
+def import_colpkg(target: Target, base: Path, colpkg: Path) -> None:
+    """Restore a .colpkg backup into the isolated profile "User 1".
+
+    Only reads the backup file; the user's real profile is never opened."""
+    prof = base / "User 1"
+    prof.mkdir(parents=True, exist_ok=True)
+    for f in prof.glob("collection.anki2*"):
+        f.unlink()
+    media = prof / "collection.media"
+    media.mkdir(exist_ok=True)
+    res = subprocess.run(
+        [str(_seed_python(target)), "-c", _IMPORT_COLPKG, str(prof / "collection.anki2"), str(colpkg), str(media)],
+        capture_output=True,
+        text=True,
+    )
+    if res.returncode != 0:
+        raise SystemExit(f"colpkg import failed:\n{res.stdout}\n{res.stderr}")
+
+
+def shots(target: Target, keep_profile: bool, timeout_s: int = 300, colpkg: Path | None = None, tag: str = "") -> list[Path]:
+    out = UI_OUT / (target.name + (f"-{tag}" if tag else ""))
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
     base = setup(target, fresh=not keep_profile, probe=False, probes=(("refine_ui_probe", UI_PROBE_SRC),))
+    if colpkg is not None:
+        import_colpkg(target, base, colpkg)
     env = _env(target, 0, None)
     env.pop("QTWEBENGINE_REMOTE_DEBUGGING", None)
     env["REFINE_UI_OUT"] = str(out)
     env["REFINE_UI_AUTOQUIT"] = "1"
+    if colpkg is not None:
+        env["REFINE_UI_NOSEED"] = "1"
     started = time.time()
     with (out / "anki-console.log").open("w", encoding="utf-8", errors="replace") as log:
         proc = subprocess.Popen(_cmd(target, base), env=env, stdout=log, stderr=subprocess.STDOUT)
@@ -496,6 +530,8 @@ def main() -> None:
     sh.add_argument("targets", nargs="*", metavar="target")
     sh.add_argument("--all", action="store_true")
     sh.add_argument("--keep-profile", action="store_true")
+    sh.add_argument("--colpkg", type=Path, help="restore this .colpkg backup into the isolated profile (read-only use)")
+    sh.add_argument("--tag", default="", help="suffix for the output folder, e.g. 'real'")
     sub.add_parser("report")
     a = ap.parse_args()
 
@@ -533,7 +569,7 @@ def main() -> None:
                 print(f"{name}: skipped, not installed ({t.command[0]})")
                 continue
             print(f"{name}: capturing screenshots ...", flush=True)
-            for png in shots(t, a.keep_profile):
+            for png in shots(t, a.keep_profile, colpkg=a.colpkg, tag=a.tag):
                 print(f"  {png}")
     elif a.cmd == "report":
         print(report())
