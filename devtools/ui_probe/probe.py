@@ -153,6 +153,7 @@ class Probe:
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
         steps.append(("cards", self.step_cards))
+        steps.append(("study_buttons", self.step_study_buttons))
         steps.append(("finish", self.step_finish))
         self.chain(steps)
 
@@ -349,6 +350,49 @@ class Probe:
 
         self.wait_for("reviewer_did_show_question", on_question, 10_000)
         mw.moveToState("review")
+
+    # Refine's own actions: the hero and per-row Study buttons must open the
+    # reviewer on the right deck (pycmd bridge -> set_current_deck -> review).
+    def step_study_buttons(self, nxt: Next) -> None:
+        mw = _mw()
+        out: dict[str, Any] = {}
+        self.r["study_buttons"] = out
+
+        def record(key: str, then: Next) -> None:
+            out[key] = {
+                "state": mw.state,
+                "current_deck": mw.col.decks.name(mw.col.decks.get_current_id()),
+            }
+            self.wait_for("deck_browser_did_render", then, 10_000)
+            mw.moveToState("deckBrowser")
+
+        def click(selector: str, key: str, then: Next) -> None:
+            js = (
+                "(function(){var b=document.querySelector(%s);"
+                "if(!b) return null; var row=b.closest('tr');"
+                "var name=row ? row.querySelector('a.deck').textContent : null; b.click(); return name;})()"
+                % json.dumps(selector)
+            )
+
+            def clicked(name: Any) -> None:
+                out[key + "_target"] = name
+                if name is None and "hero" not in key:
+                    out[key] = {"error": "button not found"}
+                    then()
+                    return
+                self.wait_for("reviewer_did_show_question", lambda: record(key, then), 8_000)
+
+            mw.web.evalWithCallback(js, clicked)
+
+        def hero() -> None:
+            click(".rf-hero .rf-btn-primary", "hero", row)
+
+        def row() -> None:
+            # last deck row that has cards waiting (a different deck than the hero's)
+            click("tr.deck.rf-has-due:not(.current) .rf-row-study", "row", nxt)
+
+        self.wait_for("deck_browser_did_render", hero, 10_000)
+        mw.moveToState("deckBrowser")
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()
