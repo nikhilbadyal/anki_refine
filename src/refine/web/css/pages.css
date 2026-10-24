@@ -1,0 +1,21 @@
+/* Statistics and Deck Options (SvelteKit pages). Most of the look comes from
+   the token block remapping Anki's own variables (--canvas, --fg, --border,
+   ...). The rules below only set fonts and the page background, using plain
+   elements: these pages' class names are hashed build output. */
+
+html.refine.rf-s-pages body {
+  background: var(--rf-bg);
+  color: var(--rf-text);
+  font-family: var(--rf-font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+/* Section titles: semibold sans like the design's panel titles (the serif is
+   kept for large numbers on the home screen). */
+html.refine.rf-s-pages h1,
+html.refine.rf-s-pages h2 {
+  font-family: var(--rf-font-ui);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+html.refine.rf-s-pages a { color: var(--rf-accent-text); }

@@ -19,6 +19,7 @@ from .surfaces.base import Surface, WebSurface
 from .surfaces.cards import CardsSurface
 from .surfaces.deck_browser import DeckBrowserSurface
 from .surfaces.overview import OverviewSurface
+from .surfaces.pages import PagesSurface
 from .surfaces.qt_chrome import QtChromeSurface
 from .surfaces.reviewer import ReviewerSurface
 from .surfaces.toolbar import ToolbarSurface
@@ -39,6 +40,7 @@ class Registry:
             ReviewerSurface(),
             QtChromeSurface(),
             CardsSurface(),
+            PagesSurface(),
         ]
         self.started = False
         self.skipped: dict[str, str] = {}

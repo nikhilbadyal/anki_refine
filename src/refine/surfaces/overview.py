@@ -10,13 +10,12 @@ hashed build output and change between releases).
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from aqt import gui_hooks
 
-from ..theme import css as theme_css
 from .base import WebSurface
+from .pages import inject_page
 
 
 class OverviewSurface(WebSurface):
@@ -41,27 +40,4 @@ class OverviewSurface(WebSurface):
         cfg = ctx.config.get()
         if not (cfg.get("enabled") and cfg["surfaces"].get(self.id)):
             return
-        base = ctx.web_base
-        payload = {
-            "classes": ["refine", f"rf-s-{self.id}", "rf-page-congrats"],
-            "links": [f"{base}/css/fonts.css", f"{base}/css/congrats.css"],
-            "script": f"{base}/js/refine.js",
-            "tokens": theme_css.root_css(cfg["accent"], cfg["density"]),
-            "styleId": theme_css.STYLE_ID,
-        }
-        # The page resets <html>'s class list after it loads, so a
-        # MutationObserver keeps Refine's classes (window.rfKeep, which
-        # refine.js's rfApply updates on live settings changes) in place.
-        web.eval(
-            "(function(p){var d=document.documentElement;"
-            "window.rfKeep=p.classes.slice();"
-            "var keep=function(){window.rfKeep.forEach(function(c){"
-            "if(!d.classList.contains(c)) d.classList.add(c);});};"
-            "keep();new MutationObserver(keep).observe(d,{attributes:true,attributeFilter:['class']});"
-            "p.links.forEach(function(h){var l=document.createElement('link');"
-            "l.rel='stylesheet';l.href=h;document.head.appendChild(l);});"
-            "var s=document.createElement('style');s.id=p.styleId;s.textContent=p.tokens;"
-            "document.head.appendChild(s);"
-            "var j=document.createElement('script');j.src=p.script;document.head.appendChild(j);"
-            f"}})({json.dumps(payload)});"
-        )
+        inject_page(ctx, web, self.id, "congrats", ("congrats.css",))

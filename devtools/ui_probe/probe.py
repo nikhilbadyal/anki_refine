@@ -155,6 +155,8 @@ class Probe:
         steps.append(("cards", self.step_cards))
         steps.append(("study_buttons", self.step_study_buttons))
         steps.append(("congrats", self.step_congrats))
+        steps.append(("stats", lambda n: self.step_window("stats", n)))
+        steps.append(("deck_options", lambda n: self.step_window("deck_options", n)))
         steps.append(("finish", self.step_finish))
         self.chain(steps)
 
@@ -414,6 +416,57 @@ class Probe:
 
         mw.moveToState("overview")
         self.later(2500, shoot)
+
+    # Separate SvelteKit windows: Statistics and Deck Options.
+    def step_window(self, which: str, nxt: Next) -> None:
+        import aqt
+
+        mw = _mw()
+        theme = "dark" if mw.pm.theme() == 2 else "light"
+        name = f"{theme}_{which}"
+        before = set(id(w) for w in QApplication.topLevelWidgets())
+        try:
+            if which == "stats":
+                mw.onStats()
+            else:
+                from aqt.deckoptions import display_options_for_deck_id
+
+                display_options_for_deck_id(mw.col.decks.get_current_id())
+        except Exception:
+            self.err(f"open:{name}")
+            nxt()
+            return
+
+        def grab() -> None:
+            new = [
+                w for w in QApplication.topLevelWidgets()
+                if id(w) not in before and w.isVisible() and w is not mw
+            ]
+            if not new:
+                self.r["shots"][name] = {"error": "window not found"}
+            else:
+                win = new[0]
+                try:
+                    win.resize(1100, 760)
+                    self.later(600, lambda: finish(win))
+                    return
+                except Exception:
+                    self.err(f"shoot:{name}")
+            nxt()
+
+        def finish(win: Any) -> None:
+            try:
+                win.grab().save(str(self.out / f"{name}.png"), "PNG")
+                self.r["shots"][name] = {"file": f"{name}.png", "class": type(win).__name__}
+            except Exception:
+                self.err(f"shoot:{name}")
+            try:
+                win.close()
+            except Exception:
+                self.err(f"close:{name}")
+            self.later(1200, nxt)
+
+        self.later(4000, grab)
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()

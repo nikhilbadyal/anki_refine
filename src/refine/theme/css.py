@@ -12,13 +12,21 @@ STYLE_ID = "rf-tokens"
 
 def _decls(tok: Dict[str, str]) -> str:
     parts = ["--rf-%s:%s;" % (k, v) for k, v in tok.items()]
+    # Anki's own variables (ts/lib/sass/_vars.scss), so Anki-styled parts of
+    # a page, and its SvelteKit pages as a whole, blend with Refine.
     parts += [
         "--canvas:%s;" % tok["bg"],
         "--canvas-elevated:%s;" % tok["surface"],
+        "--canvas-inset:%s;" % tok["surface-sunken"],
+        "--canvas-overlay:%s;" % tok["surface"],
+        "--canvas-code:%s;" % tok["surface-sunken"],
         "--fg:%s;" % tok["text"],
         "--fg-subtle:%s;" % tok["text-muted"],
+        "--fg-faint:%s;" % tok["text-faint"],
+        "--fg-link:%s;" % tok["accent-text"],
         "--border:%s;" % tok["border-strong"],
         "--border-subtle:%s;" % tok["border"],
+        "--border-focus:%s;" % tok["focus"],
     ]
     return "".join(parts)
 
