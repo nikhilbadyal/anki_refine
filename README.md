@@ -2,6 +2,14 @@
 
 Refine is an add-on for Anki Desktop that gives the home screen, deck overview, toolbar, reviewer answer bar and menus a cleaner, more modern look. It never changes your card templates, your scheduling or your data. Everything it shows is read from Anki's own data, and nothing is written to your collection.
 
+![Home screen, dark](docs/screenshots/dark_deck_browser.png)
+
+| Light home screen | Deck overview |
+|---|---|
+| ![Home screen, light](docs/screenshots/light_deck_browser.png) | ![Deck overview](docs/screenshots/dark_overview.png) |
+| **Answer bar** (card content untouched) | **Settings** |
+| ![Reviewer](docs/screenshots/light_reviewer_answer.png) | ![Settings](docs/screenshots/dark_settings.png) |
+
 ## Features
 
 - **Home screen panels** (each can be turned off):
@@ -9,7 +17,9 @@ Refine is an add-on for Anki Desktop that gives the home screen, deck overview, 
   - **Today**: cards studied and time spent, with a progress bar and a note about what is left for tomorrow.
   - **Activity**: a 26-week heatmap of reviews per day, with your current and best streak.
   - **Next 7 days**: a forecast of cards due each day.
-- Restyled **deck list**, **deck overview**, **top toolbar**, **reviewer answer bar** (optional ease colours on the Again / Hard / Good / Easy buttons) and Qt menus and scrollbars.
+- A **Study** button on every deck row with cards waiting, and a welcome with next steps when the collection is still empty.
+- Restyled **deck list**, **deck overview**, **top toolbar**, **reviewer answer bar** (optional ease colours on the Again / Hard / Good / Easy buttons), the card **browser**'s table and sidebar, and Qt menus and scrollbars.
+- **Optional, off by default: Japanese reading polish** for card content: a proper Japanese font for text your note type marks as Japanese (`lang="ja"`), tidier furigana, and furigana shown only on hover or on the answer side. Your note type's own styling always takes precedence.
 - Light and dark themes follow Anki's own theme setting. Eight accent colours and two densities (comfortable, compact).
 - Each screen can be switched off on its own, or all at once with the master switch.
 - If one screen fails, Refine turns just that screen off, writes the error to its log and leaves Anki working normally.
