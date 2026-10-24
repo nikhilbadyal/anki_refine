@@ -19,3 +19,6 @@ src/refine/user_files/*
 .idea/
 Thumbs.db
 .DS_Store
+
+# Anki writes add-on config/state here during dev runs (through the junction)
+src/refine/meta.json
