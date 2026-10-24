@@ -14,10 +14,12 @@ from aqt.qt import (
     QLabel,
     QPushButton,
     QRadioButton,
+    QScrollArea,
     QSize,
     QToolButton,
     Qt,
     QVBoxLayout,
+    QWidget,
 )
 
 from ..config import DENSITIES, SURFACE_IDS
@@ -84,6 +86,16 @@ class _SettingsDialog(QDialog):
         self._home: Dict[str, QCheckBox] = {}
         self._build()
         self.sync(self.ctx.config.get())
+        self._fit_to_screen()
+
+    def _fit_to_screen(self) -> None:
+        try:
+            screen = self.screen() or self.ctx.mw.screen()
+            avail = screen.availableGeometry().height()
+            want = self._body.sizeHint().height() + 72  # footer + rule
+            self.resize(max(self.minimumWidth(), 560), min(want, int(avail * 0.85)))
+        except Exception:
+            self.ctx.log.exception("settings sizing failed")
 
     # -- helpers -------------------------------------------------------
     def _safe(self, fn):
@@ -121,9 +133,22 @@ class _SettingsDialog(QDialog):
 
     # -- build ---------------------------------------------------------
     def _build(self) -> None:
-        root = QVBoxLayout(self)
-        root.setContentsMargins(20, 20, 20, 20)
+        # Sections scroll; the footer stays visible. Keeps the dialog usable
+        # on short screens (e.g. 1366x768 laptops at 125% scaling).
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        body = QWidget()
+        root = QVBoxLayout(body)
+        root.setContentsMargins(20, 20, 20, 12)
         root.setSpacing(14)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(body)
+        outer.addWidget(scroll, 1)
+        self._body = body
 
         title = QLabel("Refine")
         tf = title.font()
@@ -235,7 +260,7 @@ class _SettingsDialog(QDialog):
         root.addLayout(furi_row)
 
         root.addStretch(1)
-        root.addWidget(self._rule())
+        outer.addWidget(self._rule())
 
         # Footer
         foot = QHBoxLayout()
@@ -259,7 +284,8 @@ class _SettingsDialog(QDialog):
         foot.addWidget(self._log_btn)
         foot.addStretch(1)
         foot.addWidget(self._close_btn)
-        root.addLayout(foot)
+        foot.setContentsMargins(20, 12, 20, 16)
+        outer.addLayout(foot)
 
         chain = (
             list(self._swatches.values())
