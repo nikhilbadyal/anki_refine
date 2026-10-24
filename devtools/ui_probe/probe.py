@@ -377,14 +377,23 @@ class Probe:
                 % json.dumps(selector)
             )
 
+            # register the wait before clicking: the reviewer can show its
+            # first card before the click's JS callback returns
+            state = {"done": False}
+
+            def once() -> None:
+                if not state["done"]:
+                    state["done"] = True
+                    record(key, then)
+
             def clicked(name: Any) -> None:
                 out[key + "_target"] = name
-                if name is None and "hero" not in key:
+                if name is None and "hero" not in key and not state["done"]:
+                    state["done"] = True
                     out[key] = {"error": "button not found"}
                     then()
-                    return
-                self.wait_for("reviewer_did_show_question", lambda: record(key, then), 8_000)
 
+            self.wait_for("reviewer_did_show_question", once, 8_000)
             mw.web.evalWithCallback(js, clicked)
 
         def hero() -> None:

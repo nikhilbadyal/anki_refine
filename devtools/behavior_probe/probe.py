@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Callable, Generator
 
 from aqt import gui_hooks
-from aqt.qt import QApplication, QTimer, Qt
+from aqt.qt import QApplication, QTextBrowser, QTimer, Qt
 
 try:
     from aqt.qt import QTest  # type: ignore
@@ -29,6 +29,10 @@ def install(out_dir: str) -> None:
     global _probe
     _probe = Probe(Path(out_dir))
     _probe.register_hooks()
+
+
+def mw_web_h() -> int:
+    return _mw().web.height()
 
 
 def _mw() -> Any:
@@ -137,8 +141,26 @@ class Probe:
         w = QApplication.focusWidget() or mw.web
         QTest.keyClick(w, key, mod)
 
+    def dismiss_dialogs(self, label: str) -> None:
+        """Close stray modal dialogs (first-run notices) and record what they were."""
+        mw = _mw()
+        for w in QApplication.topLevelWidgets():
+            if w is mw or not w.isVisible() or "EditCurrent" in type(w).__name__:
+                continue
+            info = {"at": label, "class": type(w).__name__, "title": w.windowTitle(), "modal": w.isModal()}
+            try:
+                info["text"] = w.findChild(QTextBrowser).toPlainText()[:200] if w.findChild(QTextBrowser) else ""
+            except Exception:
+                pass
+            self.r["data"].setdefault("dismissed_dialogs", []).append(info)
+            try:
+                w.close()
+            except Exception:
+                pass
+
     def focus_main(self) -> None:
         mw = _mw()
+        self.dismiss_dialogs("focus_main")
         mw.activateWindow()
         mw.raise_()
         mw.web.setFocus()
@@ -154,6 +176,18 @@ class Probe:
         self.r["hashes"][name] = {
             "sha256": hashlib.sha256(data).hexdigest(),
             "size": [img.width(), img.height()],
+        }
+        # layout-independent comparison: the top-left 1280x600 crop of the card
+        crop = img.copy(0, 0, min(1280, img.width()), min(600, img.height()))
+        crop = crop.convertToFormat(QImage.Format.Format_RGB32)
+        self.r["hashes"][name + "_crop"] = {
+            "sha256": hashlib.sha256(crop.constBits().asstring(crop.sizeInBytes())).hexdigest(),
+            "size": [crop.width(), crop.height()],
+        }
+        self.r["data"].setdefault("geometry", {})[name] = {
+            "mw.web": [mw_web_h(), ],
+            "toolbar": _mw().toolbarWeb.height(),
+            "bottom": _mw().bottomWeb.height(),
         }
 
     def classes(self) -> Generator:
@@ -304,11 +338,19 @@ class Probe:
         self.focus_main()
         yield ("sleep", 500)
         self.key(Qt.Key.Key_S)
-        yield ("sleep", 2000)
+        for _ in range(12):
+            yield ("sleep", 500)
+            if mw.state != "deckBrowser":
+                break
+        yield ("sleep", 1500)
         self.check("A1.s_opens_study", mw.state in ("overview", "review"), f"state={mw.state}")
         self.focus_main()
         self.key(Qt.Key.Key_D)
-        yield ("sleep", 2000)
+        for _ in range(12):
+            yield ("sleep", 500)
+            if mw.state == "deckBrowser":
+                break
+        yield ("sleep", 1500)
         self.check("A1.d_returns_deckbrowser", mw.state == "deckBrowser", f"state={mw.state}")
 
         # ---- B: live settings (deck browser)
@@ -377,6 +419,13 @@ class Probe:
             yield ("sleep", 1500)
             s = yield from snap("e_no_deck_surface")
             tbl_off = yield ("js", mw.web, tbl_js)
+            panels = yield (
+                "js",
+                mw.web,
+                "JSON.stringify(['.rf-hero','.rf-side','.rf-today','.rf-activity','.rf-forecast'].map(function(q){var e=document.querySelector(q);return [q,e?getComputedStyle(e).display:'MISSING']}))",
+            )
+            self.r["data"]["surface_off_panels"] = panels
+            self.check("B.surface_off_hides_home_panels", panels is not None and '"block"' not in panels and '"grid"' not in panels and '"flex"' not in panels, panels)
             self.check(
                 "B.surface_off_removes_class",
                 "rf-s-deck_browser" not in (s["classes"]["main"] or "").split(),
@@ -408,7 +457,7 @@ class Probe:
             self.check(
                 "B.reset_accent_back",
                 s["accent"] == base["accent"] and ctx.config.value("accent") == "jade",
-                f"css={s['accent']} (baseline {base['accent']}), cfg={ctx.config.get('accent')}",
+                f"css={s['accent']} (baseline {base['accent']}), cfg={ctx.config.value('accent')}",
             )
         except Exception:
             self.err("B")
@@ -439,7 +488,9 @@ class Probe:
         self.check("A2.key3_answers_good", ok, None if a is None else {"card": a[1].id, "ease": a[2], "expected_card": cid})
         yield ("sleep", 1200)
 
-        yield ("hook", "reviewer_did_show_answer", lambda: self.key(K.Key_Space), HOOK_TIMEOUT)
+        self.focus_main()
+        a = yield ("hook", "reviewer_did_show_answer", lambda: self.key(K.Key_Space), HOOK_TIMEOUT)
+        self.check("A2.space_shows_answer_card2", a is not None, f"reviewer.state={mw.reviewer.state}")
         cid = mw.reviewer.card.id
         a = yield ("hook", "reviewer_did_answer_card", lambda: self.key(K.Key_1), HOOK_TIMEOUT)
         ok = a is not None and a[2] == 1 and a[1].id == cid
@@ -452,7 +503,19 @@ class Probe:
         self.key(K.Key_1, Ctrl)
         yield ("sleep", 800)
         c = col.get_card(cid)
-        self.check("A2.ctrl1_flags_red", c.user_flag() == 1, f"flag={c.user_flag()}")
+        flag_retried = False
+        if c.user_flag() != 1:  # flag 0 means the key was not applied; retrying cannot toggle it off
+            flag_retried = True
+            self.focus_main()
+            yield ("sleep", 500)
+            self.key(K.Key_1, Ctrl)
+            yield ("sleep", 1000)
+            c = col.get_card(cid)
+        self.check(
+            "A2.ctrl1_flags_red",
+            c.user_flag() == 1,
+            f"retried={flag_retried} flag={c.user_flag()} reviewer_card_same={mw.reviewer.card.id == cid} focus={type(QApplication.focusWidget()).__name__} active={QApplication.activeWindow()}",
+        )
 
         self.key(K.Key_Asterisk)
         yield ("sleep", 800)
@@ -486,10 +549,18 @@ class Probe:
         self.key(K.Key_Z, Ctrl)
         yield ("sleep", 1500)
         q2 = col.get_card(cur_id).queue if cur_id else None
+        retried = False
+        if q2 in (-2, -3):  # focus may still have been settling after the editor closed
+            retried = True
+            self.focus_main()
+            yield ("sleep", 500)
+            self.key(K.Key_Z, Ctrl)
+            yield ("sleep", 1500)
+            q2 = col.get_card(cur_id).queue if cur_id else None
         self.check(
             "A2.ctrl_z_undoes_bury",
             q2 not in (-2, -3),
-            f"undo_label_before={undo_before!r} queue_after={q2} undo_after={col.undo_status().undo!r}",
+            f"retried={retried} undo_label_before={undo_before!r} queue_after={q2} undo_after={col.undo_status().undo!r}",
         )
         yield ("sleep", 1000)
 

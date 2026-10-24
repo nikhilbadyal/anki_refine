@@ -318,6 +318,7 @@ class _SettingsDialog(QDialog):
 
     def sync(self, cfg: dict) -> None:
         """Reflect config on the controls without writing back."""
+        self._apply_theme(cfg)
         self._syncing = True
         try:
             acc = cfg.get("accent")
@@ -343,6 +344,37 @@ class _SettingsDialog(QDialog):
             self._furi.setEnabled(enabled and bool(cards.get("japanese", False)))
         finally:
             self._syncing = False
+
+    def _apply_theme(self, cfg: dict) -> None:
+        """Dialog-scoped stylesheet from Refine's tokens, so the dialog matches
+        the design and previews accent changes live. Scoped to
+        #RefineSettings; Anki's widgets elsewhere are untouched."""
+        try:
+            from ..theme.tokens import tokens
+
+            t = tokens(_night(), cfg.get("accent", "jade"), cfg.get("density", "comfortable"))
+            self.setStyleSheet(
+                "QDialog#RefineSettings, QDialog#RefineSettings QScrollArea,"
+                " QDialog#RefineSettings QScrollArea > QWidget > QWidget"
+                f" {{ background: {t['bg']}; color: {t['text']}; }}"
+                f" QDialog#RefineSettings QLabel {{ color: {t['text']}; }}"
+                f" QDialog#RefineSettings QLabel#RefineSection {{ color: {t['text-faint']}; }}"
+                f" QDialog#RefineSettings QCheckBox, QDialog#RefineSettings QRadioButton {{ color: {t['text']}; spacing: 8px; }}"
+                f" QDialog#RefineSettings QCheckBox::indicator:checked, QDialog#RefineSettings QRadioButton::indicator:checked"
+                f" {{ background: {t['accent']}; border: 1px solid {t['accent']}; border-radius: 4px; }}"
+                f" QDialog#RefineSettings QRadioButton::indicator:checked {{ border-radius: 7px; }}"
+                f" QDialog#RefineSettings QCheckBox::indicator, QDialog#RefineSettings QRadioButton::indicator"
+                f" {{ width: 14px; height: 14px; }}"
+                f" QDialog#RefineSettings QCheckBox::indicator:unchecked, QDialog#RefineSettings QRadioButton::indicator:unchecked"
+                f" {{ background: {t['surface']}; border: 1px solid {t['border-strong']}; border-radius: 4px; }}"
+                f" QDialog#RefineSettings QRadioButton::indicator:unchecked {{ border-radius: 7px; }}"
+                f" QDialog#RefineSettings QPushButton {{ background: {t['surface']}; color: {t['text']};"
+                f" border: 1px solid {t['border-strong']}; border-radius: 7px; padding: 6px 14px; }}"
+                f" QDialog#RefineSettings QPushButton:hover {{ background: {t['surface-hover']}; }}"
+                f" QDialog#RefineSettings QFrame[frameShape=\"4\"] {{ color: {t['border']}; }}"
+            )
+        except Exception:
+            self.ctx.log.exception("settings theming failed")
 
     def done(self, result: int) -> None:
         global _dialog
