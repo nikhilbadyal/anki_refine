@@ -53,6 +53,8 @@ class Probe:
         self.refine_pkg: str | None = None
         self.log_path: Path | None = None
         self.log_start = 0
+        self.log_end = 0
+        self.d_done = False
 
     # ----------------------------------------------------------- recording
     def check(self, cid: str, ok: bool, detail: Any = "") -> None:
@@ -264,8 +266,11 @@ class Probe:
             self.err("seed:filtered")
         col.decks.select(parent)
 
-    def finish(self) -> None:
-        mw = _mw()
+    def d_checks(self) -> None:
+        """Session-wide guard/log checks; run once (before E6 injects errors on purpose)."""
+        if self.d_done:
+            return
+        self.d_done = True
         if self.ctx is not None:
             try:
                 self.r["refine_guard_errors"] = self.ctx.guard.errors()
@@ -277,12 +282,17 @@ class Probe:
                 with self.log_path.open("rb") as f:
                     f.seek(self.log_start)
                     new = f.read().decode("utf-8", "replace")
+                self.log_end = self.log_start + len(new.encode("utf-8", "replace"))
                 lines = new.splitlines()
                 self.r["refine_log_new_lines"] = lines[-60:]
                 bad = [l for l in lines if "ERROR" in l or "Traceback" in l or "WARNING" in l]
                 self.check("D.log_no_errors", not bad, bad[:10])
             except Exception:
                 self.err("log")
+
+    def finish(self) -> None:
+        mw = _mw()
+        self.d_checks()
         self.write()
         (self.out / "behavior_done").write_text("1")
         if os.environ.get("REFINE_BEHAVIOR_AUTOQUIT") == "1":
@@ -359,12 +369,24 @@ class Probe:
         else:
             yield from self.live_settings()
 
+        # ---- E1-E5: deck browser interactions, collection untouched
+        try:
+            yield from self.browse_checks()
+        except Exception:
+            self.err("E")
+            self.check("E.exception", False, traceback.format_exc()[-400:])
+
         # ---- A2/A3: reviewer keys and button click
         yield from self.reviewer_keys()
 
         # ---- B (reviewer): live toggle must not re-render
         if self.ctx is not None:
             yield from self.reviewer_toggle()
+            try:
+                yield from self.inject_failure()
+            except Exception:
+                self.err("E6")
+                self.check("E6.exception", False, traceback.format_exc()[-400:])
 
     # ----------------------------------------------------------------- B
     def live_settings(self) -> Generator:
@@ -489,6 +511,9 @@ class Probe:
         ok = a is not None and a[2] == 3 and a[1].id == cid
         self.check("A2.key3_answers_good", ok, None if a is None else {"card": a[1].id, "ease": a[2], "expected_card": cid})
         yield ("sleep", 1200)
+        # the next question must be up before Space is sent (timing, not an assertion)
+        yield from self.poll(lambda: mw.reviewer.state == "question" and mw.reviewer.card is not None, 6000)
+        yield ("sleep", 600)
 
         self.focus_main()
         a = yield ("hook", "reviewer_did_show_answer", lambda: self.key(K.Key_Space), HOOK_TIMEOUT)
@@ -636,3 +661,295 @@ class Probe:
                 ctx.config.reset()
             except Exception:
                 pass
+
+    # =================================================== E: deck browser
+    def poll(self, fn: Callable[[], Any], timeout: int = 8000, step: int = 250) -> Generator:
+        waited = 0
+        while True:
+            try:
+                v = fn()
+                if v:
+                    return v
+            except Exception:
+                pass
+            if waited >= timeout:
+                return None
+            yield ("sleep", step)
+            waited += step
+
+    def poll_js(self, web: Any, code: str, pred: Callable[[Any], bool], timeout: int = 8000) -> Generator:
+        """Evaluate code until pred(result) holds; returns (ok, last_result)."""
+        waited, last = 0, None
+        while True:
+            last = yield ("js", web, code)
+            try:
+                if pred(last):
+                    return True, last
+            except Exception:
+                pass
+            if waited >= timeout:
+                return False, last
+            yield ("sleep", 250)
+            waited += 250
+
+    def to_deck_browser(self) -> Generator:
+        mw = _mw()
+        if mw.state != "deckBrowser":
+            yield ("hook", "deck_browser_did_render", lambda: self.to_state("deckBrowser"), HOOK_TIMEOUT)
+        else:
+            yield ("hook", "deck_browser_did_render", mw.deckBrowser.refresh, HOOK_TIMEOUT)
+        yield ("sleep", 600)
+
+    def browse_checks(self) -> Generator:
+        mw = _mw()
+        col = mw.col
+        parent = col.decks.id("M0 Probe")
+        child = col.decks.id("M0 Probe::Child")
+        empty = col.decks.id("M0 Empty")
+        self.r["data"]["E_variant"] = "refine" if self.ctx is not None else "plain"
+        yield from self.to_deck_browser()
+        rows_js = "document.querySelectorAll('tr.deck').length"
+
+        def has(did: int) -> str:
+            return f"!!document.getElementById('{did}')"
+
+        # ---- E1 collapse / expand
+        orig = bool(col.decks.get(parent).get("collapsed"))
+        click = (
+            f"(function(){{var a=document.querySelector('tr[id=\"{parent}\"] a.collapse');"
+            "if(!a)return 'NOLINK';a.click();return 'ok'})()"
+        )
+        n0 = yield ("js", mw.web, rows_js)
+        c0 = yield ("js", mw.web, has(child))
+        r = yield ("js", mw.web, click)
+        ok_dom, n1 = yield from self.poll_js(mw.web, rows_js, lambda v: v is not None and v != n0)
+        ok_cfg = yield from self.poll(lambda: bool(col.decks.get(parent).get("collapsed")) != orig)
+        c1 = yield ("js", mw.web, has(child))
+        self.check(
+            "E1.collapse_toggles",
+            r == "ok" and bool(ok_dom) and bool(ok_cfg) and c1 != c0,
+            {"click": r, "rows": [n0, n1], "child_visible": [c0, c1], "collapsed_flag": [orig, bool(col.decks.get(parent).get("collapsed"))]},
+        )
+        yield ("sleep", 800)
+        r = yield ("js", mw.web, click)
+        ok_dom2, n2 = yield from self.poll_js(mw.web, rows_js, lambda v: v == n0)
+        ok_cfg2 = yield from self.poll(lambda: bool(col.decks.get(parent).get("collapsed")) == orig)
+        c2 = yield ("js", mw.web, has(child))
+        self.check(
+            "E1.expand_restores",
+            r == "ok" and bool(ok_dom2) and bool(ok_cfg2) and c2 == c0,
+            {"click": r, "rows": [n0, n2], "child_visible": [c0, c2], "collapsed_flag": bool(col.decks.get(parent).get("collapsed"))},
+        )
+        yield ("sleep", 800)
+
+        # ---- E2 gear / options menu
+        seen: list[int] = []
+
+        def on_menu(menu: Any, deck_id: int) -> None:
+            seen.append(int(deck_id))
+            QTimer.singleShot(0, menu.close)
+
+        gui_hooks.deck_browser_will_show_options_menu.append(on_menu)
+        try:
+            gear_click = (
+                f"(function(){{var a=document.querySelector('tr[id=\"{parent}\"] td.opts > a');"
+                "if(!a)return 'NOGEAR';a.click();return 'ok'})()"
+            )
+            r = yield ("js", mw.web, gear_click)
+            got = yield from self.poll(lambda: parent in seen, 5000)
+            self.check("E2.gear_click_fires_hook", r == "ok" and bool(got), {"click": r, "seen": list(seen), "expected": parent})
+            yield ("sleep", 500)
+            attrs = yield (
+                "js",
+                mw.web,
+                f"(function(){{var a=document.querySelector('tr[id=\"{parent}\"] td.opts > a');"
+                "return a?[a.getAttribute('role'),a.getAttribute('tabindex'),a.getAttribute('aria-label')].join('|'):'NOGEAR'})()",
+            )
+            n_before = len(seen)
+            enter = (
+                f"(function(){{var a=document.querySelector('tr[id=\"{parent}\"] td.opts > a');if(!a)return 'NOGEAR';"
+                "a.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));return 'ok'})()"
+            )
+            r = yield ("js", mw.web, enter)
+            got = yield from self.poll(lambda: len(seen) > n_before, 3000)
+            if self.ctx is not None:
+                self.check("E2.gear_enter_fires_hook", r == "ok" and bool(got), {"dispatch": r, "fired": bool(got), "gear_attrs": attrs})
+            else:
+                self.skip("E2.gear_enter_fires_hook", f"informational without Refine: fired={bool(got)} dispatch={r} attrs={attrs}")
+            yield ("sleep", 500)
+        finally:
+            try:
+                gui_hooks.deck_browser_will_show_options_menu.remove(on_menu)
+            except Exception:
+                pass
+        self.dismiss_dialogs("E2")
+
+        # ---- E3 shift-click selects a deck
+        cur = col.decks.get_current_id()
+        target = empty if cur != empty else parent
+        shift = (
+            f"(function(){{var t=document.querySelector('tr.deck[id=\"{target}\"]');if(!t)return 'NOROW';"
+            "t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,shiftKey:true}));return 'ok'})()"
+        )
+        r = yield ("js", mw.web, shift)
+        got = yield from self.poll(lambda: col.decks.get_current_id() == target, 6000)
+        self.check(
+            "E3.shift_click_selects_deck",
+            r == "ok" and bool(got),
+            {"dispatch": r, "before": cur, "target": target, "after": col.decks.get_current_id(), "state": mw.state},
+        )
+        yield ("sleep", 800)
+        try:
+            col.decks.select(cur)
+        except Exception:
+            self.err("E3:restore")
+        yield from self.to_deck_browser()
+
+        # ---- E4 drag-to-reparent command path (pycmd, as Anki's drop handler sends it)
+        def name_of(did: int) -> str:
+            return col.decks.name(did)
+
+        def drag(arg: str) -> str:
+            return f"(function(){{pycmd('drag:{arg}');return 'ok'}})()"
+
+        yield ("js", mw.web, drag(f"{empty},{parent}"))
+        got = yield from self.poll(lambda: name_of(empty) == "M0 Probe::M0 Empty", 6000)
+        self.check("E4.drag_reparent_under", bool(got), {"name_after": name_of(empty)})
+        yield ("sleep", 1200)
+        yield from self.to_deck_browser()
+        yield ("js", mw.web, drag(f"{empty},"))
+        got = yield from self.poll(lambda: name_of(empty) == "M0 Empty", 6000)
+        self.check("E4.drag_back_to_top", bool(got), {"name_after": name_of(empty)})
+        yield ("sleep", 1200)
+        yield from self.to_deck_browser()
+
+        # ---- E5 collection untouched by browsing
+        def snap() -> dict:
+            return {
+                "col.mod": col.mod,
+                "max_card_mod": col.db.scalar("select max(mod) from cards"),
+                "max_note_mod": col.db.scalar("select max(mod) from notes"),
+                "revlog": col.db.scalar("select count() from revlog"),
+            }
+
+        before = snap()
+        yield ("hook", "overview_did_refresh", lambda: self.to_state("overview"), HOOK_TIMEOUT)
+        yield ("sleep", 800)
+        yield from self.to_deck_browser()
+        known = {id(w) for w in QApplication.topLevelWidgets() if w.isVisible()}
+        mw.onStats()
+        yield ("sleep", 2500)
+        stats_w = [
+            w for w in QApplication.topLevelWidgets()
+            if w.isVisible() and w is not mw and (id(w) not in known or "Stat" in type(w).__name__)
+        ]
+        self.r["data"]["E5_stats_windows"] = [type(w).__name__ for w in stats_w]
+        for w in stats_w:
+            w.close()
+        yield ("sleep", 800)
+        self.focus_main()
+        if self.ctx is not None:
+            ctx = self.ctx
+            try:
+                for key, val in (("accent", "rose"), ("density", "compact"), ("home.activity", False), ("surfaces.deck_browser", False)):
+                    ctx.config.set(key, val)
+                    yield ("sleep", 1000)
+                ctx.config.set("surfaces.deck_browser", True)
+                yield ("sleep", 1000)
+            finally:
+                ctx.config.reset()
+            yield ("sleep", 1200)
+        yield from self.to_deck_browser()
+        after = snap()
+        self.check(
+            "E5.browsing_leaves_collection_untouched",
+            before == after and mw.state == "deckBrowser",
+            {"before": before, "after": after, "stats_windows": self.r["data"]["E5_stats_windows"], "settings_toggled": self.ctx is not None},
+        )
+
+    # ============================================ E6: injected exception
+    def inject_failure(self) -> Generator:
+        mw = _mw()
+        ctx = self.ctx
+        home = sys.modules.get((self.refine_pkg or "") + ".home")
+        if home is None:
+            self.skip("E6", "home module not found")
+            return
+        self.d_checks()  # session-clean verdict BEFORE errors are injected on purpose
+        yield from self.to_deck_browser()
+        log0 = self.log_path.stat().st_size if self.log_path and self.log_path.exists() else 0
+
+        def bad_dialogs(known: set) -> list:
+            from aqt.qt import QMessageBox
+
+            out = []
+            for w in QApplication.topLevelWidgets():
+                if w.isVisible() and w is not mw and id(w) not in known:
+                    n = type(w).__name__
+                    if isinstance(w, QMessageBox) or "Error" in n or "Error" in w.windowTitle():
+                        out.append(f"{n}/{w.windowTitle()}")
+            return out
+
+        known = {id(w) for w in QApplication.topLevelWidgets() if w.isVisible()}
+        orig_collect, orig_totals = home.collect, home.totals
+
+        def boom(*a: Any, **k: Any) -> Any:
+            raise RuntimeError("injected by behavior probe")
+
+        # (a) background stats failure goes through the QueryOp failure path, not the guard
+        gen0 = len(ctx.guard.errors().get("deck_browser", []))
+        home.collect = boom
+        try:
+            for _ in range(3):
+                yield ("hook", "deck_browser_did_render", mw.deckBrowser.refresh, HOOK_TIMEOUT)
+                yield ("sleep", 1200)
+        finally:
+            home.collect = orig_collect
+        self.check(
+            "E6a.collect_failure_contained",
+            not ctx.guard.is_disabled("deck_browser")
+            and len(ctx.guard.errors().get("deck_browser", [])) == gen0
+            and not bad_dialogs(known),
+            {"disabled": ctx.guard.is_disabled("deck_browser"), "guard_errors": len(ctx.guard.errors().get("deck_browser", [])), "dialogs": bad_dialogs(known)},
+        )
+
+        # (b) failure inside the guarded will_render handler
+        rendered = 0
+        home.totals = boom
+        try:
+            for _ in range(4):
+                a = yield ("hook", "deck_browser_did_render", mw.deckBrowser.refresh, HOOK_TIMEOUT)
+                if a is not None:
+                    rendered += 1
+                yield ("sleep", 800)
+        finally:
+            home.totals = orig_totals
+        yield ("sleep", 1000)
+        errs = ctx.guard.errors().get("deck_browser", [])
+        cls = yield ("js", mw.web, "document.documentElement.className")
+        rows = yield ("js", mw.web, "document.querySelectorAll('tr.deck').length")
+        table = yield ("js", mw.web, "!!document.querySelector('center > table')")
+        mw.grab().toImage().save(str(self.out / "E6_after_disable.png"), "PNG")
+        dlg = bad_dialogs(known)
+        self.check("E6.guard_disabled_surface", ctx.guard.is_disabled("deck_browser") is True and len(errs) >= 3, {"disabled": ctx.guard.is_disabled("deck_browser"), "errors": len(errs)})
+        self.check("E6.errors_recorded", bool(errs) and "injected by behavior probe" in errs[-1], (errs[-1][-200:] if errs else None))
+        self.check("E6.deck_browser_still_renders", rendered == 4 and bool(table) and (rows or 0) > 0, {"did_render_fired": rendered, "table": table, "deck_rows": rows})
+        self.check("E6.class_removed", "rf-s-deck_browser" not in (cls or "").split(), cls)
+        self.check("E6.no_error_dialog", not dlg, dlg)
+        try:
+            with self.log_path.open("rb") as f:  # type: ignore[union-attr]
+                f.seek(log0)
+                new = f.read().decode("utf-8", "replace")
+            n = new.count("Error in surface 'deck_browser'")
+            self.check("E6.failure_logged", n >= 3, n)
+        except Exception:
+            self.err("E6:log")
+        # functions are restored; the guard is per session, so the surface stays off until Anki restarts
+        yield ("hook", "deck_browser_did_render", mw.deckBrowser.refresh, HOOK_TIMEOUT)
+        yield ("sleep", 800)
+        cls2 = yield ("js", mw.web, "document.documentElement.className")
+        self.r["data"]["E6_after_restore"] = {
+            "still_disabled": ctx.guard.is_disabled("deck_browser"),
+            "class_has_surface": "rf-s-deck_browser" in (cls2 or "").split(),
+            "note": "guard disable is per session: a restart is needed to re-enable the surface",
+        }
