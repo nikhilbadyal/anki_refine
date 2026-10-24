@@ -408,12 +408,25 @@ def today_html(s: HomeStats, t: Totals, goal: int = 0) -> str:
     )
 
 
-def activity_html(s: HomeStats) -> str:
+def _day_label(day: datetime.date, offset: int) -> str:
+    """"Today", "Yesterday"/"Tomorrow", else "Mon, Oct 20" (hover tips)."""
+    if offset == 0:
+        return "Today"
+    if offset in (-1, 1):
+        return "Yesterday" if offset < 0 else "Tomorrow"
+    return f"{day:%a}, {day:%b} {day.day}"
+
+
+def activity_html(s: HomeStats, today: datetime.date | None = None) -> str:
+    today = today or datetime.date.today()
     peak = max(s.activity) if s.activity else 0
+    last = len(s.activity) - 1
     cells = []
-    for n in s.activity:
+    for i, n in enumerate(s.activity):
         level = 0 if n == 0 or peak == 0 else min(4, max(1, math.ceil(4 * n / peak)))
-        cells.append(f'<i class="rf-l{level}" title="{n} review{"s" if n != 1 else ""}"></i>')
+        day = today - datetime.timedelta(days=last - i)
+        tip = f'{_day_label(day, i - last)} · {fmt_int(n)} review{"s" if n != 1 else ""}'
+        cells.append(f'<i class="rf-l{level}" data-rf-tip="{tip}"></i>')
     return (
         f'<div class="rf-heat" role="img" aria-label="Reviews per day, last 26 weeks">{"".join(cells)}</div>'
         f'<div class="rf-row rf-muted rf-small"><span>Streak {s.streak} day{"s" if s.streak != 1 else ""}</span>'
@@ -429,10 +442,12 @@ def forecast_html(s: HomeStats, today: datetime.date | None = None) -> str:
         # square-root scale: today's overdue backlog would otherwise flatten
         # every other day to nothing
         h = 4 if peak == 0 or n == 0 else max(8, round(100 * math.sqrt(n / peak)))
-        label = (today + datetime.timedelta(days=i)).strftime("%a")[:2]
+        day = today + datetime.timedelta(days=i)
+        label = day.strftime("%a")[:2]
         cls = "rf-bar rf-bar-now" if i == 0 else "rf-bar"
+        tip = f"{_day_label(day, i)} · {fmt_int(n)} due"
         bars.append(
-            f'<div class="rf-bar-col" title="{fmt_int(n)} due"><div class="{cls}" style="height:{h}%"></div>'
+            f'<div class="rf-bar-col" data-rf-tip="{tip}"><div class="{cls}" style="height:{h}%"></div>'
             f'<span class="rf-mono rf-faint">{label}</span></div>'
         )
     return f'<div class="rf-bars" role="img" aria-label="Cards due over the next 7 days">{"".join(bars)}</div>'

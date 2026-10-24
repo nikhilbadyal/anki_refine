@@ -151,6 +151,7 @@ class Probe:
                 (f"{theme}:menu", lambda n, t=theme: self.step_menu(t, n)),
                 (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
+                (f"{theme}:wide", lambda n, t=theme: self.step_wide(t, n)),
             ]
         steps.append(("perf", self.step_perf))
         steps.append(("deck_click", self.step_deck_click))
@@ -272,8 +273,23 @@ class Probe:
     def step_deck_browser(self, theme: str, nxt: Next) -> None:
         mw = _mw()
 
+        def hover(sel: str) -> None:
+            mw.web.eval(f"(function(){{var e=document.querySelector({json.dumps(sel)});"
+                        "if(e) e.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));})()")
+
         def go() -> None:
             self.shoot(theme, "deck_browser")
+            # hover tips on the Activity and Next 7 days panels (panels fill in late)
+            self.later(1500, tip_activity)
+
+        def tip_activity() -> None:
+            hover(".rf-heat i:last-child")
+            self.later(400, lambda: (self.shoot(theme, "tip_activity"), hover(".rf-bars .rf-bar-col:nth-child(2)"),
+                                     self.later(400, tip_forecast)))
+
+        def tip_forecast() -> None:
+            self.shoot(theme, "tip_forecast")
+            hover("body")
             nxt()
 
         self.wait_for("deck_browser_did_render", go, 10_000)
@@ -854,6 +870,36 @@ class Probe:
 
         self.wait_for("deck_browser_did_render", go, 10_000)
         mw.deckBrowser.refresh()
+
+    def step_wide(self, theme: str, nxt: Next) -> None:
+        """Full-screen sizes: Home at 1920 and 2560 wide, overview and Stats at 1920."""
+        mw = _mw()
+
+        def home(w: int, h: int, then: Next) -> None:
+            mw.resize(w, h)
+            self.wait_for("deck_browser_did_render", lambda: self.later(1500, lambda: (
+                self.shoot(theme, f"deck_browser_{w}"), then())), 10_000)
+            mw.deckBrowser.refresh()
+
+        def overview() -> None:
+            mw.resize(1920, 1040)
+
+            def go() -> None:
+                self.later(1500, lambda: (self.shoot(theme, "overview_1920"), stats()))
+
+            self.wait_for("overview_did_refresh", go, 10_000)
+            mw.moveToState("overview")
+
+        def stats() -> None:
+            mw.web.eval("pycmd('refine:sidebar:go:stats')")
+            self.later(4000, lambda: (self.shoot(theme, "stats_1920"), back()))
+
+        def back() -> None:
+            mw.resize(1280, 820)
+            self.wait_for("deck_browser_did_render", nxt, 10_000)
+            mw.moveToState("deckBrowser")
+
+        home(2560, 1400, lambda: home(1920, 1040, overview))
 
     def step_finish(self, nxt: Next) -> None:
         mw = _mw()

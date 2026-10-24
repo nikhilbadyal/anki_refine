@@ -123,6 +123,18 @@ html.refine.rf-motion .rf-dc-bar { animation: rf-dc-grow 320ms var(--rf-ease) ba
 @keyframes rf-dc-grow { from { transform: scaleY(0); } }
 @media (prefers-reduced-motion: reduce) { html.refine .rf-dc-bar { animation: none !important; } }
 
+/* Full screen: a wider column and a taller chart, so the overview isn't a
+   small card floating in empty space. */
+@media (min-width: 1500px) {
+  html.refine.rf-s-overview.rf-page-Overview center { max-width: 880px; }
+  html.refine .rf-dc-plot { height: 120px; }
+  html.refine .rf-dc-chart { gap: 8px; }
+}
+@media (min-width: 2200px) {
+  html.refine.rf-s-overview.rf-page-Overview center { max-width: 1040px; }
+  html.refine .rf-dc-plot { height: 150px; }
+}
+
 /* Bottom bar (Options / Custom Study / Description). */
 html.refine.rf-s-overview #outer { border-top: 1px solid var(--rf-border); }
 html.refine.rf-s-overview #header { padding: 9px; }

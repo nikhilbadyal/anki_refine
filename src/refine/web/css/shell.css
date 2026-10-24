@@ -149,7 +149,18 @@ html.refine .rf-search input {
   color: var(--rf-text);
 }
 html.refine .rf-search input::placeholder { color: var(--rf-text-faint); }
-html.refine .rf-header .rf-btn-primary { height: 34px; padding: 0 14px; font-size: 13px; }
+/* self-contained: the Stats page doesn't load base.css */
+html.refine .rf-header button.rf-btn-primary {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--rf-radius-s);
+  background: var(--rf-primary-bg);
+  color: var(--rf-primary-fg);
+  font: 600 13px var(--rf-font-ui);
+  cursor: pointer;
+}
+html.refine .rf-header button.rf-btn-primary:hover { background: var(--rf-primary-hover); }
 html.refine .rf-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* The overview's own deck title would repeat the header. */

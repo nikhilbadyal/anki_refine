@@ -2,6 +2,17 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.2.6] - 2026-10-24
+
+### Added
+- **Hover the Activity and Next 7 days panels** to see the figures for that day: "Today · 6 reviews", "Tue, Oct 20 · 14 reviews", "Tomorrow · 3 due". The label appears at once (no browser tooltip delay) and the square or bar under the pointer is highlighted.
+
+### Changed
+- **Full screen:** Home and the deck overview grow with large windows instead of staying a narrow centred column. Home widens to 1520px (1760px on very wide screens) with wider side panels; the overview widens with a taller 14-day chart.
+
+### Fixed
+- The header's Add card button keeps its dark primary style on the Stats screen.
+
 ## [0.2.5] - 2026-10-24
 
 ### Added

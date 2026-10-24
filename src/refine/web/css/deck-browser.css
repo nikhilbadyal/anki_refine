@@ -41,6 +41,18 @@ html.refine.rf-s-deck_browser.rf-page-DeckBrowser:not(.rf-h-today):not(.rf-h-act
 html.refine.rf-s-deck_browser.rf-h-today #studiedToday { display: none; }
 html.refine.rf-s-deck_browser #studiedToday { margin: 0; color: var(--rf-text-muted); font-size: var(--rf-text-s); text-align: center; }
 
+/* Full screen: use the room instead of a 1180px island with a wide empty
+   margin; the side panels widen a little so the heatmap and bars breathe. */
+@media (min-width: 1500px) {
+  html.refine.rf-s-deck_browser.rf-page-DeckBrowser center { max-width: 1520px; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 28px; }
+  html.refine.rf-s-deck_browser.rf-page-DeckBrowser:not(.rf-h-today):not(.rf-h-activity):not(.rf-h-forecast) center { max-width: 1100px; }
+  html.refine .rf-bars { height: 88px; }
+}
+@media (min-width: 2200px) {
+  html.refine.rf-s-deck_browser.rf-page-DeckBrowser center { max-width: 1760px; grid-template-columns: minmax(0, 1fr) 380px; column-gap: 32px; }
+  html.refine .rf-bars { height: 100px; }
+}
+
 @media (max-width: 960px) {
   html.refine.rf-s-deck_browser.rf-page-DeckBrowser body { padding: 20px 16px 32px; }
   html.refine.rf-s-deck_browser.rf-page-DeckBrowser center { grid-template-columns: minmax(0, 1fr); }
@@ -117,6 +129,29 @@ html.refine .rf-bar-col { flex: 1; display: flex; flex-direction: column; align-
 html.refine .rf-bar { width: 100%; min-height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--rf-accent) 45%, var(--rf-surface)); }
 html.refine .rf-bar.rf-bar-now { background: var(--rf-primary-bg); }
 html.refine .rf-bar-col span { font-size: 11px; }
+
+/* hover: the day under the pointer stands out; its figures show in .rf-tip */
+html.refine .rf-heat i[data-rf-tip]:hover { outline: 1.5px solid var(--rf-text); outline-offset: 0.5px; }
+html.refine .rf-bar-col[data-rf-tip] { cursor: default; }
+html.refine .rf-bar-col[data-rf-tip]:hover .rf-bar { filter: brightness(1.12); box-shadow: 0 0 0 1.5px var(--rf-text); }
+html.refine .rf-bar-col[data-rf-tip]:hover span { color: var(--rf-text); }
+html.refine .rf-tip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: none;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: var(--rf-primary-bg);
+  color: var(--rf-primary-fg);
+  font: 500 12px/1.3 var(--rf-font-ui);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+}
+html.refine .rf-tip.rf-tip-on { opacity: 1; visibility: visible; }
+html.refine.rf-motion .rf-tip { transition: opacity 120ms var(--rf-ease); }
 
 /* ------------------------------------------------------------ deck table */
 

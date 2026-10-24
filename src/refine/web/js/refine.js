@@ -404,6 +404,35 @@
     });
   }
 
+  // Hover tips for the Activity and Next 7 days panels: one floating label,
+  // shown at once (the browser's own title tooltip waits about a second).
+  // Delegated, so it keeps working when rfFillHome replaces the panels.
+  var tipEl = null;
+  function hideTip() {
+    if (tipEl) tipEl.classList.remove("rf-tip-on");
+  }
+  document.addEventListener("mouseover", function (ev) {
+    var t = ev.target && ev.target.closest && ev.target.closest("[data-rf-tip]");
+    if (!t) return hideTip();
+    if (!tipEl) {
+      tipEl = document.createElement("div");
+      tipEl.className = "rf-tip";
+      tipEl.setAttribute("aria-hidden", "true");
+      document.body.appendChild(tipEl);
+    }
+    tipEl.textContent = t.getAttribute("data-rf-tip");
+    // a forecast column spans the whole chart height; point at its bar
+    var r = (t.querySelector(".rf-bar") || t).getBoundingClientRect();
+    tipEl.classList.add("rf-tip-on");
+    var w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    var x = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 8));
+    var y = r.top - h - 6;
+    if (y < 8) y = r.bottom + 6;
+    tipEl.style.transform = "translate(" + Math.round(x) + "px," + Math.round(y) + "px)";
+  });
+  document.addEventListener("scroll", hideTip, true);
+  window.addEventListener("blur", hideTip);
+
   // Ctrl+K focuses the header search (shell pages only; Anki doesn't use it here)
   document.addEventListener("keydown", function (ev) {
     if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && (ev.key === "k" || ev.key === "K")) {

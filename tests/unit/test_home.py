@@ -128,6 +128,9 @@ class Panels(unittest.TestCase):
         self.assertEqual(out.count("height:4%"), 7)
         self.assertEqual(out.count("rf-bar-now"), 1)
         self.assertIn(">Th<", out)
+        self.assertIn('data-rf-tip="Today · 0 due"', out)
+        self.assertIn('data-rf-tip="Tomorrow · 0 due"', out)
+        self.assertIn('data-rf-tip="Sat, Mar 7 · 0 due"', out)
 
     def test_forecast_dominant_first_day(self):
         s = HomeStats(forecast=[400, 1, 4, 0, 100, 0, 0])
@@ -156,13 +159,14 @@ class Panels(unittest.TestCase):
 
     def test_activity_levels(self):
         s = HomeStats(activity=[0, 1, 25, 26, 75, 100], streak=1, best_streak=3)
-        out = home.activity_html(s)
+        out = home.activity_html(s, datetime.date(2026, 3, 5))
         for lvl in range(5):
             self.assertIn(f'class="rf-l{lvl}"', out)
-        self.assertIn('class="rf-l1" title="1 review"', out)
-        self.assertIn('class="rf-l1" title="25 reviews"', out)
-        self.assertIn('class="rf-l2" title="26 reviews"', out)
-        self.assertIn('class="rf-l4" title="100 reviews"', out)
+        self.assertIn('class="rf-l1" data-rf-tip="Sun, Mar 1 · 1 review"', out)
+        self.assertIn('class="rf-l1" data-rf-tip="Mon, Mar 2 · 25 reviews"', out)
+        self.assertIn('class="rf-l2" data-rf-tip="Tue, Mar 3 · 26 reviews"', out)
+        self.assertIn('class="rf-l4" data-rf-tip="Today · 100 reviews"', out)
+        self.assertIn('data-rf-tip="Yesterday · 75 reviews"', out)
         self.assertIn("Streak 1 day<", out)
         self.assertIn("Best 3", out)
 
