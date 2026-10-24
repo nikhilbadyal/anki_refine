@@ -23,7 +23,10 @@ class ToolbarSurface(WebSurface):
         web_content.head += canvas_css('.rf-s-toolbar[data-rf-state="review"]')
 
     def install(self, ctx: Any) -> None:
-        self._hook = ctx.guard.wrap(self.id, lambda new, old: self._on_state(ctx, new))
+        # mw.state, not the hook's argument: when a review has no cards, Anki
+        # moves to the overview inside the move to review, so the hooks fire
+        # "overview" first and "review" last while the window shows the overview
+        self._hook = ctx.guard.wrap(self.id, lambda new, old: self._on_state(ctx, ctx.mw.state))
         gui_hooks.state_did_change.append(self._hook)
 
     def uninstall(self, ctx: Any) -> None:

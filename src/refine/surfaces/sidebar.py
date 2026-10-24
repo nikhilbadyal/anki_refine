@@ -275,6 +275,11 @@ class SidebarSurface(WebSurface):
                 mw.onAddCard()
             elif arg == "sync":
                 mw.on_sync_button_clicked()
+            elif arg == "theme":
+                # same setting as Preferences > Theme; Anki redraws every screen
+                from aqt.theme import Theme, theme_manager
+
+                mw.set_theme(Theme.LIGHT if theme_manager.night_mode else Theme.DARK)
             elif arg == "options":
                 from aqt.deckoptions import display_options_for_deck
 

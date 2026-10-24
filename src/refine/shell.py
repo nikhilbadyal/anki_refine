@@ -19,6 +19,8 @@ _ICONS = {
     "stats": '<path d="M3 13V8M8 13V3M13 13V6"/>',
     "options": '<path d="M3 5h6M11 5h2M3 11h2M7 11h6"/><circle cx="10" cy="5" r="1.5"/><circle cx="6" cy="11" r="1.5"/>',
     "sync": '<path d="M13 6.5A5 5 0 0 0 4 5M3 9.5A5 5 0 0 0 12 11"/><path d="M4 2.5V5h2.5M12 13.5V11H9.5"/>',
+    "moon": '<path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/>',
+    "sun": '<circle cx="8" cy="8" r="2.75"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.06 1.06M11.54 11.54l1.06 1.06M3.4 12.6l1.06-1.06M11.54 4.46l1.06-1.06"/>',
     "addon": '<rect x="3" y="3" width="4" height="4" rx="1"/><rect x="9" y="3" width="4" height="4" rx="1"/><rect x="3" y="9" width="4" height="4" rx="1"/><rect x="9" y="9" width="4" height="4" rx="1"/>',
 }
 
@@ -97,6 +99,12 @@ def sidebar_html(active: str, profile: str, extras: list[tuple[str, str]]) -> st
         f'<div class="rf-nav">{"".join(items)}</div>'
         f"{extra}"
         '<div class="rf-shell-foot">'
+        # both labels are rendered; CSS shows the one for Anki's current theme,
+        # so it stays right on pages Anki doesn't redraw (Stats)
+        f'<button class="rf-nav-item rf-theme-toggle" type="button" onclick="{_cmd("go:theme")}" '
+        'title="Switch between light and dark theme">'
+        f'<span class="rf-theme-to-dark">{icon("moon")}<span class="rf-nav-label">Dark mode</span></span>'
+        f'<span class="rf-theme-to-light">{icon("sun")}<span class="rf-nav-label">Light mode</span></span></button>'
         f'<button class="rf-nav-item rf-sync" type="button" onclick="{_cmd("go:sync")}" title="Sync (Y)">'
         f'{icon("sync")}<span class="rf-nav-label">Sync</span>'
         '<kbd class="rf-key">Y</kbd></button>'

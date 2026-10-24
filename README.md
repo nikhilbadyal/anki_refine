@@ -4,26 +4,39 @@ Refine is an add-on for Anki Desktop that gives the home screen, deck overview, 
 
 ![Home screen, dark](docs/screenshots/dark_deck_browser.png)
 
-| Light home screen | Deck overview |
+| Home, light | Deck overview |
 |---|---|
-| ![Home screen, light](docs/screenshots/light_deck_browser.png) | ![Deck overview](docs/screenshots/dark_overview.png) |
-| **Answer bar** (card content untouched) | **Settings** |
-| ![Reviewer](docs/screenshots/light_reviewer_answer.png) | ![Settings](docs/screenshots/dark_settings.png) |
+| ![Home screen, light](docs/screenshots/light_deck_browser.png) | ![Deck overview with the last 14 days](docs/screenshots/light_overview.png) |
+| **Answer bar** (card content untouched) | **Statistics inside the main window** |
+| ![Reviewer](docs/screenshots/light_reviewer_answer.png) | ![Stats](docs/screenshots/dark_stats_inline.png) |
+| **Hover any day for its figures** | **Settings** |
+| ![Activity hover](docs/screenshots/light_tip_activity.png) | ![Settings](docs/screenshots/dark_settings.png) |
 
 ## Features
 
-- **Home screen panels** (each can be turned off):
-  - **Cards waiting** headline with the new / learning / due counts, an estimate of the time needed at your recent pace, and a **Study** button for the deck that has cards due.
-  - **Today**: cards studied and time spent, with a progress bar and a note about what is left for tomorrow.
-  - **Activity**: a 26-week heatmap of reviews per day, with your current and best streak.
-  - **Next 7 days**: a forecast of cards due each day.
-- **Sidebar navigation** like the design: Decks, Stats, Browse, Add cards, Deck options and Sync on the left, with a search and Add card header. **Statistics opens inside the main window** instead of a separate one. Can be turned off in Settings.
-- A **Study** button on every deck row with cards waiting, and a welcome with next steps when the collection is still empty.
-- Restyled **deck list**, **deck overview**, **top toolbar**, **reviewer answer bar** (tinted answer buttons with the interval inside; by default only Again and Good are shown, optional ease colours), the card **browser**'s table and sidebar, and Qt menus and scrollbars.
-- **Optional, off by default: Japanese reading polish** for card content: a proper Japanese font for text your note type marks as Japanese (`lang="ja"`), tidier furigana, and furigana shown only on hover or on the answer side. Your note type's own styling always takes precedence.
-- Light and dark themes follow Anki's own theme setting. Eight accent colours and two densities (comfortable, compact).
-- Each screen can be switched off on its own, or all at once with the master switch.
-- If one screen fails, Refine turns just that screen off, writes the error to its log and leaves Anki working normally.
+**Home screen**
+- A **sidebar** with Decks, Stats, Browse, Add cards, Deck options, a light/dark **theme switch** and Sync, plus a header with card search (Ctrl+K) and Add card.
+- A **headline** with the cards waiting, the new / learning / due counts and how long they'll take at your recent pace. Click anywhere on a deck row to see that deck's numbers and a Study button; click elsewhere or press Esc for all decks again.
+- **Deck list** with a Study button on every deck that has cards waiting, an ⓘ button for the deck overview, and:
+  - **Retention**: share of reviews remembered in the last 30 days (Anki's "true retention").
+  - **New cards left**: how many new cards remain, the share already introduced and, at a steady pace, when you'll finish.
+  - **Leech warning**: a small badge on decks with leech-tagged cards; click it to open those cards in the Browser.
+- Side panels (each can be turned off): **Today** (cards studied, time, progress), **Activity** (26-week heatmap with streaks) and **Next 7 days** (forecast). Hover any square or bar for that day's figures.
+
+**Studying**
+- **Deck overview** with the counts, a Study Now button and a **Last 14 days** chart (correct vs. Again, reviews per day, percent correct).
+- **Answer bar** with tinted Again and Good buttons showing the interval inside. Only Again and Good are shown by default; keys 2 and 4 still answer Hard and Easy, and Settings brings all four back.
+- A one-line **session summary** when you finish a deck: cards, time, percent correct, tomorrow's load and your streak.
+- **Statistics open inside the main window**, next to the sidebar, instead of a separate window.
+
+**Everywhere**
+- Light and dark themes follow Anki's own theme setting. Eight accent colours, two densities, and smooth or reduced motion.
+- Layouts adapt from a small window up to full screen on large monitors.
+- The card browser's table and sidebar, the top toolbar and Qt menus and scrollbars are restyled to match.
+- Optional, off by default: **Japanese reading polish** (a proper Japanese font for `lang="ja"` text, tidier furigana, furigana on hover).
+- Each screen can be switched off on its own, or all at once with the master switch. If one screen fails, Refine turns just that screen off, logs the error and leaves Anki working normally.
+
+**What Refine never touches:** your card templates and card content, scheduling, and your collection. Everything it shows is read from Anki's own data; nothing is written.
 
 ## Compatibility
 
@@ -33,7 +46,10 @@ Refine is an add-on for Anki Desktop that gives the home screen, deck overview, 
 
 ## Install
 
-1. Download `refine-<version>.ankiaddon`.
+**From AnkiWeb:** in Anki, open **Tools ▸ Add-ons ▸ Get Add-ons…**, paste the add-on's code from its AnkiWeb page, and restart Anki.
+
+**From GitHub:**
+1. Download `refine-<version>.ankiaddon` from the [latest release](https://github.com/shreyanshsinghks/anki_refine/releases/latest).
 2. In Anki: **Tools ▸ Add-ons ▸ Install from file…** and pick the file.
 3. Restart Anki.
 
@@ -61,7 +77,7 @@ Refine makes no network requests and sends no data anywhere. Settings live in An
 
 ## License
 
-Bundled fonts (Hanken Grotesk, JetBrains Mono, Newsreader) are under the SIL Open Font License; copies are in `src/refine/LICENSES/`.
+Refine is licensed under the [GNU Affero General Public License v3.0](LICENSE), the same licence as Anki. Bundled fonts (Hanken Grotesk, JetBrains Mono, Newsreader) are under the SIL Open Font License; copies are in `src/refine/LICENSES/`.
 
 ## Development
 

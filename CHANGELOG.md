@@ -2,6 +2,17 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.3.0] - 2026-10-24
+
+First public release (AnkiWeb and GitHub).
+
+### Added
+- **Light/Dark mode button** in the sidebar, above Sync. It switches Anki's own theme setting (the same as Preferences ▸ Theme).
+- Licensed under the GNU AGPL v3, the same licence as Anki.
+
+### Fixed
+- Clicking Study on a deck with nothing left to study no longer leaves Anki's old top toolbar showing above the header on the "finished this deck" screen.
+
 ## [0.2.6] - 2026-10-24
 
 ### Added

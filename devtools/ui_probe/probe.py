@@ -155,6 +155,7 @@ class Probe:
             ]
         steps.append(("perf", self.step_perf))
         steps.append(("deck_click", self.step_deck_click))
+        steps.append(("theme_toggle", self.step_theme_toggle))
         steps.append(("stats_inline", self.step_stats_inline))
         steps.append(("diagnostics", self.step_diagnostics))
         steps.append(("goal", self.step_goal))
@@ -870,6 +871,35 @@ class Probe:
 
         self.wait_for("deck_browser_did_render", go, 10_000)
         mw.deckBrowser.refresh()
+
+    def step_theme_toggle(self, nxt: Next) -> None:
+        """The sidebar's Dark/Light mode button flips Anki's theme; a second
+        click flips it back."""
+        from aqt.theme import theme_manager
+
+        mw = _mw()
+        out: dict[str, Any] = {"before_night": theme_manager.night_mode}
+        self.r["theme_toggle"] = out
+        click = "(function(){var b=document.querySelector('.rf-theme-toggle');if(b) b.click();return !!b;})()"
+
+        def first() -> None:
+            mw.web.evalWithCallback(click, lambda found: (out.__setitem__("button_found", found),
+                                                          self.later(2500, after_first)))
+
+        def after_first() -> None:
+            out["after_first_night"] = theme_manager.night_mode
+            self.shoot("dark" if theme_manager.night_mode else "light", "theme_toggled")
+            mw.web.evalWithCallback(click, lambda _: self.later(2500, after_second))
+
+        def after_second() -> None:
+            out["after_second_night"] = theme_manager.night_mode
+            nxt()
+
+        if mw.state != "deckBrowser":
+            self.wait_for("deck_browser_did_render", lambda: self.later(800, first), 10_000)
+            mw.moveToState("deckBrowser")
+        else:
+            first()
 
     def step_wide(self, theme: str, nxt: Next) -> None:
         """Full-screen sizes: Home at 1920 and 2560 wide, overview and Stats at 1920."""

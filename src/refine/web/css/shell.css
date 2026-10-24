@@ -97,7 +97,13 @@ html.refine .rf-key {
   padding: 0;
 }
 
-html.refine .rf-shell-foot { margin-top: auto; }
+html.refine .rf-shell-foot { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+html.refine .rf-theme-toggle > span { display: contents; }
+html.refine .rf-theme-toggle .rf-theme-to-light,
+html.refine.night-mode .rf-theme-toggle .rf-theme-to-dark,
+html.refine body.nightMode .rf-theme-toggle .rf-theme-to-dark { display: none; }
+html.refine.night-mode .rf-theme-toggle .rf-theme-to-light,
+html.refine body.nightMode .rf-theme-toggle .rf-theme-to-light { display: contents; }
 html.refine .rf-shell button.rf-sync { border: 1px solid var(--rf-border-strong); font-size: 13px; }
 
 /* -------------------------------------------------------------- header */
