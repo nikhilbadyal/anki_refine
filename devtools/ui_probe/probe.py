@@ -152,6 +152,7 @@ class Probe:
                 (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
+        steps.append(("diagnostics", self.step_diagnostics))
         steps.append(("goal", self.step_goal))
         steps.append(("cards", self.step_cards))
         steps.append(("study_buttons", self.step_study_buttons))
@@ -508,6 +509,37 @@ class Probe:
             mw.moveToState("deckBrowser")
         self.wait_for("deck_browser_did_render", rendered, 10_000)
         self.ctx.config.set("daily_goal", 10)
+
+    def step_diagnostics(self, nxt: Next) -> None:
+        name = "diagnostics"
+        if self.ctx is None or not self.refine_pkg:
+            self.r["shots"][name] = {"skipped": "no _ctx"}
+            nxt()
+            return
+        mod = importlib.import_module(f"{self.refine_pkg}.ui.menu")
+
+        def grab() -> None:
+            dlg = next((w for w in QApplication.topLevelWidgets()
+                        if w.objectName() == "RefineDiagnostics" and w.isVisible()), None)
+            if dlg is None:
+                self.r["shots"][name] = {"error": "RefineDiagnostics not found"}
+            else:
+                try:
+                    dlg.grab().save(str(self.out / f"{name}.png"), "PNG")
+                    from aqt.qt import QPlainTextEdit
+
+                    text = dlg.findChild(QPlainTextEdit)
+                    self.r["shots"][name] = {
+                        "file": f"{name}.png",
+                        "report_head": text.toPlainText()[:600] if text else None,
+                    }
+                except Exception:
+                    self.err(f"shoot:{name}")
+                dlg.close()
+            self.later(SETTLE_MS, nxt)
+
+        mod._open_diagnostics(self.ctx)
+        self.later(800, grab)
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()

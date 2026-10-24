@@ -46,6 +46,10 @@ def _report(ctx: Any) -> str:
     safe("Anki", anki_version)
     safe("Qt", qt_version)
     safe("Chromium", chromium)
+    safe(
+        "Refine",
+        lambda: json.loads((ctx.addon_dir / "manifest.json").read_text("utf-8")).get("human_version", "?"),
+    )
     safe("Add-on package", lambda: ctx.addon_package)
     parts.append("")
     safe("Config", lambda: "\n" + json.dumps(ctx.config.get(), indent=2, sort_keys=True))
