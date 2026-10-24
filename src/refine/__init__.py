@@ -1,20 +1,27 @@
 """Refine: a modern look for Anki Desktop.
 
-M0 skeleton. It only registers the add-on's web exports so the dev tooling
-can confirm assets are served under /_addons/<package>/web/. No hooks, no
-styling. Surfaces arrive in M1+ (see PLAN.md section 9).
+Entry point. Everything is set up by bootstrap.setup(); any failure there is
+logged and Anki continues with its stock interface. `_ctx` is exposed for the
+dev-only screenshot probe.
 """
 
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
-_log = logging.getLogger(__name__)
+_log = logging.getLogger("refine")
+_ctx = None
 
 try:
     from aqt import mw
+except ImportError:  # imported outside Anki, e.g. by unit tests
+    mw = None
 
-    if mw is not None:
-        mw.addonManager.setWebExports(__name__, r"web/.*\.(css|js|svg|woff2)$")
-except Exception:  # never let start-up problems reach Anki's error dialog
-    _log.exception("Refine failed to initialise; Anki will run without it.")
+if mw is not None:
+    try:
+        from .bootstrap import setup
+
+        _ctx = setup(mw, __name__, Path(__file__).resolve().parent)
+    except Exception:  # never let start-up problems reach Anki's error dialog
+        _log.exception("Refine failed to initialise; Anki will run without it.")

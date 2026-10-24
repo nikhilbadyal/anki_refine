@@ -32,12 +32,21 @@ py -m unittest discover -s tests -t .            # selector contract + unit test
 
 `snapshot` seeds a throwaway collection in `.anki-dev/<target>/`. It deletes and recreates that folder on every run. Never point it at real data. The probe refuses to run outside `.anki-dev`.
 
+### Screenshots
+
+```sh
+py scripts/devenv.py shots 26.09.3-installed      # add --keep-profile to reuse .anki-dev/<target>
+```
+
+Launches an isolated Anki with the dev-only `refine_ui_probe` add-on, which seeds the throwaway collection and writes full-window PNGs (`light_`/`dark_` + `deck_browser`, `deck_browser_narrow`, `overview`, `reviewer_question`, `reviewer_answer`, `settings`) plus `shots.json` and `anki-console.log` to `out/ui/<target>/` (git-ignored). The settings shot is skipped if the add-on exposes no `_ctx`.
+
 ### Layout
 
 | Path | What |
 |---|---|
 | `src/refine/` | The add-on (this is what gets packaged) |
 | `devtools/m0_probe/` | Dev-only probe add-on; inert unless `REFINE_M0_OUT` is set; never shipped |
+| `devtools/ui_probe/` | Dev-only screenshot add-on; inert unless `REFINE_UI_OUT` is set; never shipped |
 | `devtools/htmlinventory.py` | Stdlib HTML/selector helpers used by the report and tests |
 | `scripts/devenv.py` | venvs, isolated profiles, linking, launching, snapshots, report |
 | `tests/contract/fixtures/<target>/` | Captured HTML + probe/DevTools data per Anki build |

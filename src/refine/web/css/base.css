@@ -1,1 +1,86 @@
-/* Refine base stylesheet. Intentionally empty in M0; tokens arrive in M1. */
+/* Refine base. Every rule is scoped under html.refine so the stylesheet is
+   inert when Refine is off (the class is toggled live, nothing re-renders).
+   Tokens (--rf-*) come from <style id="rf-tokens">. */
+
+html.refine body {
+  font-family: var(--rf-font-ui);
+  color: var(--rf-text);
+  background: var(--rf-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Buttons Anki renders in these pages (bottom bars, overview, deck list). */
+html.refine button {
+  font-family: var(--rf-font-ui);
+  font-size: var(--rf-text-s);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--rf-text);
+  background: transparent;
+  border: 1px solid var(--rf-border-strong);
+  border-radius: var(--rf-radius-s);
+  padding: 0 14px;
+  height: 32px;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  transition: background-color var(--rf-dur) var(--rf-ease), border-color var(--rf-dur) var(--rf-ease), color var(--rf-dur) var(--rf-ease);
+}
+html.refine button:hover { background: var(--rf-surface-hover); border-color: var(--rf-border-strong); }
+html.refine button:active { background: var(--rf-surface-active); }
+html.refine button[disabled] { color: var(--rf-text-faint); cursor: not-allowed; }
+
+html.refine .rf-btn-primary,
+html.refine button.rf-btn-primary {
+  background: var(--rf-primary-bg);
+  color: var(--rf-primary-fg);
+  border-color: transparent;
+  font-weight: 600;
+}
+html.refine .rf-btn-primary:hover { background: var(--rf-primary-hover); }
+html.refine .rf-btn-lg { height: 46px; padding: 0 22px; border-radius: var(--rf-radius-m); font-size: 15px; }
+
+html.refine :focus { outline: none; }
+html.refine :focus-visible,
+html.refine button:focus-visible,
+html.refine a:focus-visible {
+  outline: 2px solid var(--rf-focus);
+  outline-offset: 2px;
+}
+
+/* Anki's "Reduce motion" (on by default) also turns ours off. */
+html.refine body.reduce-motion *,
+html.refine body.reduce-motion *::before,
+html.refine body.reduce-motion *::after { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  html.refine * { transition: none !important; }
+}
+
+/* Scrollbars (Anki's rules are body:not(.isMac) scoped; match that). */
+html.refine body:not(.isMac)::-webkit-scrollbar,
+html.refine body:not(.isMac) *::-webkit-scrollbar { background-color: transparent; width: 12px; height: 12px; }
+html.refine body:not(.isMac)::-webkit-scrollbar-thumb,
+html.refine body:not(.isMac) *::-webkit-scrollbar-thumb {
+  background: var(--rf-border-strong);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+html.refine body:not(.isMac)::-webkit-scrollbar-thumb:hover,
+html.refine body:not(.isMac) *::-webkit-scrollbar-thumb:hover { background-color: var(--rf-text-faint); }
+html.refine body:not(.isMac)::-webkit-scrollbar-corner { background: transparent; }
+
+/* Count colours used across screens. */
+html.refine .new-count { color: var(--rf-new); }
+html.refine .learn-count { color: var(--rf-learn); }
+html.refine .review-count { color: var(--rf-review); }
+html.refine .zero-count { color: var(--rf-muted-count); }
+
+/* Utilities for Refine's own markup. */
+html.refine .rf-muted { color: var(--rf-text-muted); }
+html.refine .rf-faint { color: var(--rf-text-faint); }
+html.refine .rf-mono { font-family: var(--rf-font-mono); }
+html.refine .rf-small { font-size: var(--rf-text-xs); }
+html.refine .rf-c-new { color: var(--rf-new); }
+html.refine .rf-c-learn { color: var(--rf-learn); }
+html.refine .rf-c-review { color: var(--rf-review); }

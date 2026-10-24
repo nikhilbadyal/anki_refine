@@ -1,0 +1,51 @@
+/* Top toolbar. Its Qt height is measured from this CSS when Toolbar.draw()
+   renders (M0 report Q3), so sizes here are safe. */
+
+html.refine.rf-s-toolbar body { background: var(--rf-bg); margin: 0; padding: 8px 0 6px; }
+/* while reviewing, match the card canvas like stock Anki does */
+/* review state: Anki canvas, emitted by ToolbarSurface.contribute */
+
+html.refine.rf-s-toolbar body .toolbar,
+html.refine.rf-s-toolbar body.fancy .toolbar,
+html.refine.rf-s-toolbar body.fancy:not(.flat) .toolbar {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--rf-surface);
+  border: 1px solid var(--rf-border);
+  border-radius: var(--rf-radius-m);
+  box-shadow: none;
+  overflow: visible;
+}
+html.refine.rf-s-toolbar body.fancy.flat .toolbar { background: transparent; border-color: transparent; }
+
+html.refine.rf-s-toolbar .hitem,
+html.refine.rf-s-toolbar body.fancy .hitem,
+html.refine.rf-s-toolbar body.fancy:not(.flat) .hitem {
+  font: 500 13.5px var(--rf-font-ui);
+  color: var(--rf-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--rf-radius-s);
+  padding: 6px 14px;
+  text-decoration: none;
+  box-shadow: none;
+}
+html.refine.rf-s-toolbar body.fancy .hitem:first-child,
+html.refine.rf-s-toolbar body.fancy .hitem:last-child { padding: 6px 14px; }
+html.refine.rf-s-toolbar .hitem:hover,
+html.refine.rf-s-toolbar body.fancy .hitem:hover { background: var(--rf-surface-hover); color: var(--rf-text); border: 0; text-decoration: none; }
+html.refine.rf-s-toolbar body.fancy .hitem:active { background: var(--rf-surface-active); }
+
+html.refine.rf-s-toolbar[data-rf-state="deckBrowser"] #decks,
+html.refine.rf-s-toolbar[data-rf-state="overview"] #decks {
+  background: var(--rf-surface-active);
+  color: var(--rf-text);
+  font-weight: 600;
+}
+
+/* sync state colours from Anki (normal-sync / full-sync) keep precedence */
+html.refine.rf-s-toolbar #sync.normal-sync { color: var(--rf-new) !important; }
+html.refine.rf-s-toolbar #sync.full-sync { color: var(--rf-learn) !important; }
+html.refine.rf-s-toolbar #sync-spinner { filter: none; opacity: 0.7; }
+html.refine.rf-s-toolbar.night-mode #sync-spinner { filter: invert(1); }

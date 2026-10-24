@@ -5,6 +5,7 @@
     py scripts/devenv.py setup <target> [--fresh] [--probe]
     py scripts/devenv.py run <target> [--port 8080]      interactive dev Anki
     py scripts/devenv.py snapshot <target>... [--all]    automated probe run
+    py scripts/devenv.py shots <target>... [--all] [--keep-profile]   PNG screenshots
     py scripts/devenv.py report                          cross-version report
 
 Every target runs from an isolated base folder under .anki-dev/<target>/ and
@@ -35,6 +36,8 @@ OUT = ROOT / "out" / "m0"
 FIXTURES = ROOT / "tests" / "contract" / "fixtures"
 ADDON_SRC = ROOT / "src" / "refine"
 PROBE_SRC = ROOT / "devtools" / "m0_probe"
+UI_OUT = ROOT / "out" / "ui"
+UI_PROBE_SRC = ROOT / "devtools" / "ui_probe"
 IS_WIN = sys.platform == "win32"
 
 
@@ -169,7 +172,8 @@ def _seed_prefs(target: Target, base: Path) -> None:
         raise SystemExit(f"profile pre-seed failed:\n{res.stdout}\n{res.stderr}")
 
 
-def setup(target: Target, fresh: bool, probe: bool) -> Path:
+def setup(target: Target, fresh: bool, probe: bool, probes: tuple[tuple[str, Path], ...] = ()) -> Path:
+    """probes: extra (link name, devtools folder) pairs to link into addons21."""
     base = DEV_BASE / target.name
     if fresh and base.exists():
         _remove_base(base)
@@ -182,6 +186,8 @@ def setup(target: Target, fresh: bool, probe: bool) -> Path:
         _link(probe_link, PROBE_SRC)
     elif _is_link(probe_link):
         _unlink(probe_link)
+    for link_name, src in probes:
+        _link(addons / link_name, src)
     return base
 
 
@@ -199,6 +205,8 @@ def _env(target: Target, port: int, out: Path | None) -> dict[str, str]:
     env["PYTHONUNBUFFERED"] = "1"
     env.pop("REFINE_M0_OUT", None)
     env.pop("REFINE_M0_AUTOQUIT", None)
+    env.pop("REFINE_UI_OUT", None)
+    env.pop("REFINE_UI_AUTOQUIT", None)
     if out is not None:
         env["REFINE_M0_OUT"] = str(out)
         env["REFINE_M0_AUTOQUIT"] = "1"
@@ -275,6 +283,29 @@ def snapshot(target: Target, port: int, timeout_s: int = 300) -> dict:
                     text = text.replace(form, alias)
             (fixture / name).write_text(text, encoding="utf-8")
     return cdp
+
+
+def shots(target: Target, keep_profile: bool, timeout_s: int = 300) -> list[Path]:
+    out = UI_OUT / target.name
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+    base = setup(target, fresh=not keep_profile, probe=False, probes=(("refine_ui_probe", UI_PROBE_SRC),))
+    env = _env(target, 0, None)
+    env.pop("QTWEBENGINE_REMOTE_DEBUGGING", None)
+    env["REFINE_UI_OUT"] = str(out)
+    env["REFINE_UI_AUTOQUIT"] = "1"
+    started = time.time()
+    with (out / "anki-console.log").open("w", encoding="utf-8", errors="replace") as log:
+        proc = subprocess.Popen(_cmd(target, base), env=env, stdout=log, stderr=subprocess.STDOUT)
+        try:
+            proc.wait(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            print(f"{target.name}: timed out after {timeout_s} s, killing")
+            proc.kill()
+            proc.wait(timeout=30)
+    print(f"{target.name}: exit={proc.returncode} in {round(time.time() - started, 1)} s")
+    return sorted(out.glob("*.png"))
 
 
 # Anki's own "aqt[qt]" extra pins the exact PyQt/QtWebEngine of each release.
@@ -461,6 +492,10 @@ def main() -> None:
     sn.add_argument("targets", nargs="*", metavar="target")
     sn.add_argument("--all", action="store_true")
     sn.add_argument("--port", type=int, default=9231)
+    sh = sub.add_parser("shots")
+    sh.add_argument("targets", nargs="*", metavar="target")
+    sh.add_argument("--all", action="store_true")
+    sh.add_argument("--keep-profile", action="store_true")
     sub.add_parser("report")
     a = ap.parse_args()
 
@@ -487,6 +522,19 @@ def main() -> None:
             res = snapshot(t, a.port + i)
             print(f"{name}: exit={res.get('exit_code')} in {res.get('wall_seconds')} s")
         print(report())
+    elif a.cmd == "shots":
+        chosen = list(TARGETS) if a.all else a.targets
+        unknown = [n for n in chosen if n not in TARGETS]
+        if unknown or not chosen:
+            raise SystemExit(f"choose targets from {list(TARGETS)} or pass --all")
+        for name in chosen:
+            t = TARGETS[name]
+            if not t.available():
+                print(f"{name}: skipped, not installed ({t.command[0]})")
+                continue
+            print(f"{name}: capturing screenshots ...", flush=True)
+            for png in shots(t, a.keep_profile):
+                print(f"  {png}")
     elif a.cmd == "report":
         print(report())
 
