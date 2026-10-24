@@ -1,13 +1,14 @@
 /* Home screen. Anki's table and its drag-and-drop stay intact; Refine lays the
    page out with a grid and restyles rows. Panels injected by Refine are
-   hidden unless their html.rf-h-* flag is on. */
+   hidden unless their html.rf-h-* flag is on (!important: these are Refine's
+   own elements and must not out-rank their own display rules below). */
 
 html:not(.rf-s-deck_browser) .rf-hero,
 html:not(.rf-s-deck_browser) .rf-side,
 html.rf-s-deck_browser:not(.rf-h-hero) .rf-hero,
 html.rf-s-deck_browser:not(.rf-h-today) .rf-today,
 html.rf-s-deck_browser:not(.rf-h-activity) .rf-activity,
-html.rf-s-deck_browser:not(.rf-h-forecast) .rf-forecast { display: none; }
+html.rf-s-deck_browser:not(.rf-h-forecast) .rf-forecast { display: none !important; }
 
 html.refine.rf-s-deck_browser.rf-page-DeckBrowser body {
   margin: 0;

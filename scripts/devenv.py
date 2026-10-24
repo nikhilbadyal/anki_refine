@@ -246,7 +246,8 @@ def snapshot(target: Target, port: int, timeout_s: int = 300) -> dict:
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
-    base = setup(target, fresh=True, probe=True)
+    # contract fixtures must be stock Anki markup: run the probe without Refine
+    base = setup(target, fresh=True, probe=True, refine=False)
     log = (out / "anki-console.log").open("w", encoding="utf-8", errors="replace")
     started = time.time()
     proc = subprocess.Popen(

@@ -422,10 +422,12 @@ class Probe:
             panels = yield (
                 "js",
                 mw.web,
-                "JSON.stringify(['.rf-hero','.rf-side','.rf-today','.rf-activity','.rf-forecast'].map(function(q){var e=document.querySelector(q);return [q,e?getComputedStyle(e).display:'MISSING']}))",
+                # rendered or not (children of a display:none parent still
+                # compute their own display value, so check client rects)
+                "JSON.stringify(['.rf-hero','.rf-side','.rf-today','.rf-activity','.rf-forecast'].map(function(q){var e=document.querySelector(q);return [q,e?(e.getClientRects().length?'visible':'hidden'):'MISSING']}))",
             )
             self.r["data"]["surface_off_panels"] = panels
-            self.check("B.surface_off_hides_home_panels", panels is not None and '"block"' not in panels and '"grid"' not in panels and '"flex"' not in panels, panels)
+            self.check("B.surface_off_hides_home_panels", panels is not None and '"visible"' not in panels, panels)
             self.check(
                 "B.surface_off_removes_class",
                 "rf-s-deck_browser" not in (s["classes"]["main"] or "").split(),

@@ -3,7 +3,16 @@
 
 html.refine.rf-s-toolbar body { background: var(--rf-bg); margin: 0; padding: 8px 0 6px; }
 /* while reviewing, match the card canvas like stock Anki does */
-/* review state: Anki canvas, emitted by ToolbarSurface.contribute */
+/* review state: Anki canvas (emitted by ToolbarSurface.contribute) and stock
+   height, so the card keeps its space; the toolbar re-measures on state change */
+html.refine.rf-s-toolbar[data-rf-state="review"] body { padding: 0; }
+html.refine.rf-s-toolbar[data-rf-state="review"] body .toolbar,
+html.refine.rf-s-toolbar[data-rf-state="review"] body.fancy .toolbar,
+html.refine.rf-s-toolbar[data-rf-state="review"] body.fancy:not(.flat) .toolbar {
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+}
 
 html.refine.rf-s-toolbar body .toolbar,
 html.refine.rf-s-toolbar body.fancy .toolbar,

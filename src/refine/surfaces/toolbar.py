@@ -34,3 +34,9 @@ class ToolbarSurface(WebSurface):
         web = getattr(ctx.mw, "toolbarWeb", None)
         if web is not None:
             web.eval(f"window.rfSetState && window.rfSetState({json.dumps(state)});")
+            # the review state is more compact; re-measure like Anki does when
+            # its own body classes change (evals run in order)
+            # (skipped when Anki's "hide top bar" mode animates the height itself)
+            hide_mode = getattr(ctx.mw.pm, "hide_top_bar", lambda: False)()
+            if hasattr(web, "adjustHeightToFit") and not hide_mode:
+                web.adjustHeightToFit()
