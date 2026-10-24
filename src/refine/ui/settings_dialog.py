@@ -216,6 +216,23 @@ class _SettingsDialog(QDialog):
             self._safe(lambda v: self._set("reviewer.ease_colors", bool(v)))
         )
         root.addWidget(self._ease)
+        root.addWidget(self._rule())
+
+        # Cards (opt-in: the only settings that affect card content)
+        root.addWidget(self._section("Cards (optional)"))
+        self._ja = QCheckBox("Japanese reading polish")
+        self._ja.setToolTip(
+            "Japanese fonts for text your note type marks as Japanese, and tidier furigana.\n"
+            "Your card templates still take precedence."
+        )
+        self._ja.toggled.connect(self._safe(lambda v: self._set("cards.japanese", bool(v))))
+        root.addWidget(self._ja)
+        self._furi = QCheckBox("Show furigana only on hover or on the answer side")
+        self._furi.toggled.connect(self._safe(lambda v: self._set("cards.furigana_hover", bool(v))))
+        furi_row = QHBoxLayout()
+        furi_row.setContentsMargins(24, 0, 0, 0)
+        furi_row.addWidget(self._furi)
+        root.addLayout(furi_row)
 
         root.addStretch(1)
         root.addWidget(self._rule())
@@ -250,7 +267,7 @@ class _SettingsDialog(QDialog):
             + [self._enabled]
             + [self._surface[s] for s in SURFACE_IDS]
             + [self._home[h] for h, _l in _HOME]
-            + [self._ease, self._reset_btn, self._log_btn, self._close_btn]
+            + [self._ease, self._ja, self._furi, self._reset_btn, self._log_btn, self._close_btn]
         )
         for a, b in zip(chain, chain[1:]):
             QDialog.setTabOrder(a, b)
@@ -292,6 +309,11 @@ class _SettingsDialog(QDialog):
                 cb.setChecked(bool(home.get(hid, True)))
                 cb.setEnabled(enabled)
             self._ease.setChecked(bool((cfg.get("reviewer") or {}).get("ease_colors", True)))
+            cards = cfg.get("cards") or {}
+            self._ja.setChecked(bool(cards.get("japanese", False)))
+            self._furi.setChecked(bool(cards.get("furigana_hover", False)))
+            self._ja.setEnabled(enabled)
+            self._furi.setEnabled(enabled and bool(cards.get("japanese", False)))
         finally:
             self._syncing = False
 

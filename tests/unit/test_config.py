@@ -144,5 +144,15 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(s.get(), C.DEFAULTS)
 
 
+
+
+class CardsSection(unittest.TestCase):
+    def test_cards_default_off_and_normalized(self) -> None:
+        from refine import config
+
+        self.assertEqual(config.normalize(None)["cards"], {"japanese": False, "furigana_hover": False})
+        got = config.normalize({"cards": {"japanese": True, "furigana_hover": "yes", "bogus": 1}})
+        self.assertEqual(got["cards"], {"japanese": True, "furigana_hover": False})
+
 if __name__ == "__main__":
     unittest.main()

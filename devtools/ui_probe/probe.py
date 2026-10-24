@@ -152,6 +152,7 @@ class Probe:
                 (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
+        steps.append(("cards", self.step_cards))
         steps.append(("finish", self.step_finish))
         self.chain(steps)
 
@@ -307,6 +308,47 @@ class Probe:
 
         self.wait_for("reviewer_did_show_answer", go, 10_000)
         mw.reviewer.bottom.web.eval('pycmd("ans")')
+
+    # Opt-in card layer: furigana hidden on the question, shown on the answer.
+    def step_cards(self, nxt: Next) -> None:
+        mw = _mw()
+        out: dict[str, Any] = {}
+        self.r["cards_layer"] = out
+        if self.ctx is None or not mw.col.decks.id_for_name("M0 Probe"):
+            out["skipped"] = "needs Refine _ctx and the seeded M0 Probe deck"
+            nxt()
+            return
+        probe_js = (
+            "(function(){var rt=document.querySelector('#qa rt');"
+            "return JSON.stringify({html:document.documentElement.className,"
+            "rt: rt ? getComputedStyle(rt).visibility : null});})()"
+        )
+        self.ctx.config.update({"cards.japanese": True, "cards.furigana_hover": True})
+        mw.col.decks.select(mw.col.decks.id_for_name("M0 Probe"))
+
+        def on_question() -> None:
+            mw.web.grab().save(str(self.out / "cards_question.png"), "PNG")
+
+            def got(v: Any) -> None:
+                out["question"] = json.loads(v) if isinstance(v, str) else v
+                self.wait_for("reviewer_did_show_answer", on_answer, 10_000)
+                mw.reviewer.bottom.web.eval('pycmd("ans")')
+
+            mw.web.evalWithCallback(probe_js, got)
+
+        def on_answer() -> None:
+            mw.web.grab().save(str(self.out / "cards_answer.png"), "PNG")
+
+            def got(v: Any) -> None:
+                out["answer"] = json.loads(v) if isinstance(v, str) else v
+                self.ctx.config.update({"cards.japanese": False, "cards.furigana_hover": False})
+                self.wait_for("deck_browser_did_render", nxt, 10_000)
+                mw.moveToState("deckBrowser")
+
+            mw.web.evalWithCallback(probe_js, got)
+
+        self.wait_for("reviewer_did_show_question", on_question, 10_000)
+        mw.moveToState("review")
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()

@@ -14,6 +14,8 @@ DENSITIES = ("comfortable", "compact")
 SURFACE_IDS = ("toolbar", "deck_browser", "overview", "reviewer", "qt_chrome")
 
 HOME_IDS = ("hero", "today", "activity", "forecast")
+# opt-in card-content layer; off by default because it touches card rendering
+CARD_IDS = ("japanese", "furigana_hover")
 
 DEFAULTS: Dict[str, Any] = {
     "schema_version": 1,
@@ -23,6 +25,7 @@ DEFAULTS: Dict[str, Any] = {
     "surfaces": {s: True for s in SURFACE_IDS},
     "reviewer": {"ease_colors": True},
     "home": {k: True for k in HOME_IDS},
+    "cards": {k: False for k in CARD_IDS},
 }
 
 _log = logging.getLogger("refine")
@@ -55,6 +58,11 @@ def normalize(raw: Optional[Mapping]) -> Dict[str, Any]:
             for h in HOME_IDS:
                 if isinstance(home.get(h), bool):
                     out["home"][h] = home[h]
+        cards = raw.get("cards")
+        if isinstance(cards, Mapping):
+            for c in CARD_IDS:
+                if isinstance(cards.get(c), bool):
+                    out["cards"][c] = cards[c]
         reviewer = raw.get("reviewer")
         if isinstance(reviewer, Mapping) and isinstance(reviewer.get("ease_colors"), bool):
             out["reviewer"]["ease_colors"] = reviewer["ease_colors"]

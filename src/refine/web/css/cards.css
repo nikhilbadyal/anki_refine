@@ -1,0 +1,29 @@
+/* Opt-in Japanese reading polish for card content.
+   Every selector is wrapped in :where() (zero specificity), so any rule in a
+   note type's own styling wins. Nothing here sets fonts or colours on the
+   card as a whole; only elements the template marks as Japanese
+   (lang="ja") and ruby annotations are touched. */
+
+/* Japanese text the template marks with lang="ja": a proper Japanese font
+   instead of the Chinese/Korean glyph fallback Windows often picks. */
+:where(html.rf-cards-ja) :where(:lang(ja)) {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP", sans-serif;
+  line-break: strict;
+}
+
+/* Furigana: readable size, sitting close above the base text. Covers Anki's
+   {{furigana:}} filter output and hand-written <ruby>. */
+:where(html.rf-cards-ja) :where(ruby) { ruby-position: over; }
+:where(html.rf-cards-ja) :where(rt) {
+  font-size: 0.5em;
+  line-height: 1;
+  opacity: 0.85;
+  user-select: none;
+}
+
+/* Furigana on demand: hidden until hovered, focused, or the answer side is
+   shown (Anki marks the answer with #answer inside #qa). visibility keeps
+   the layout from jumping. */
+:where(html.rf-furigana-hover) :where(rt) { visibility: hidden; }
+:where(html.rf-furigana-hover) :where(ruby:hover, ruby:focus-within) :where(rt),
+:where(html.rf-furigana-hover) :where(#qa:has(#answer)) :where(rt) { visibility: visible; }

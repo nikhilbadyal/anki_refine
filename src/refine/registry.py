@@ -16,6 +16,7 @@ from aqt import gui_hooks
 
 from .context import Context
 from .surfaces.base import Surface, WebSurface
+from .surfaces.cards import CardsSurface
 from .surfaces.deck_browser import DeckBrowserSurface
 from .surfaces.overview import OverviewSurface
 from .surfaces.qt_chrome import QtChromeSurface
@@ -24,6 +25,8 @@ from .surfaces.toolbar import ToolbarSurface
 from .theme import css as theme_css
 
 BRIDGE_PREFIX = "refine:"
+# html classes the restricted card-content scope may carry
+CARD_FLAG_PREFIXES = ("rf-cards-", "rf-furigana-")
 
 
 class Registry:
@@ -35,6 +38,7 @@ class Registry:
             OverviewSurface(),
             ReviewerSurface(),
             QtChromeSurface(),
+            CardsSurface(),
         ]
         self.started = False
         self.skipped: dict[str, str] = {}
@@ -89,6 +93,9 @@ class Registry:
         if not matched:
             return
         base = self.ctx.web_base
+        if any(getattr(s, "scope", "") == "cards" for s in matched):
+            self._card_content(web_content, cfg, matched)
+            return
         # rf-page-* tells pages that share a surface stylesheet apart (e.g. the
         # deck list and its bottom bar are separate webviews)
         classes = [k for k, v in self.flags(cfg).items() if v] + [f"rf-page-{name}"]
@@ -110,6 +117,21 @@ class Registry:
         web_content.js.append(f"{base}/js/refine.js")
         for s in matched:
             self.ctx.guard.wrap(s.id, s.contribute)(self.ctx, web_content, context, cfg)
+
+    def _card_content(self, web_content: Any, cfg: dict[str, Any], matched: list) -> None:
+        """Card webviews: only the card-layer classes and stylesheet. No
+        tokens, fonts, base.css or html.refine, which would alter the card's
+        own look (e.g. Anki's --canvas)."""
+        flags = self.flags(cfg)
+        classes = [k for k, v in flags.items() if v and k.startswith(CARD_FLAG_PREFIXES)]
+        web_content.head += (
+            "<script>(function(){var d=document.documentElement;d.dataset.rfScope='cards';"
+            f"d.classList.add.apply(d.classList,{json.dumps(classes)});}})();</script>"
+        )
+        for s in matched:
+            for f in s.css:
+                web_content.css.append(f"{self.ctx.web_base}/css/{f}")
+        web_content.js.append(f"{self.ctx.web_base}/js/refine.js")
 
     def _on_js_message(self, handled: tuple, message: Any, context: Any) -> tuple:
         if not isinstance(message, str) or not message.startswith(BRIDGE_PREFIX):

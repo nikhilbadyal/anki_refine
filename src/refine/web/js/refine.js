@@ -6,10 +6,13 @@
   // Live settings: toggle Refine's html classes and swap the token stylesheet.
   window.rfApply = function (p) {
     var d = document.documentElement;
+    // card webviews only ever carry the card-layer classes, never tokens
+    var cardsOnly = d.dataset.rfScope === "cards";
     Object.keys(p.flags || {}).forEach(function (k) {
+      if (cardsOnly && !/^rf-(cards|furigana)-/.test(k)) return;
       d.classList.toggle(k, !!p.flags[k]);
     });
-    if (p.tokens && p.styleId) {
+    if (p.tokens && p.styleId && !cardsOnly) {
       var s = document.getElementById(p.styleId);
       if (!s) {
         s = document.createElement("style");
