@@ -2,12 +2,16 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-24
 
-First installable build.
+First installable build. Visual direction from the "Anki Revamp" design: warm neutrals, jade accent, Hanken Grotesk / Newsreader / JetBrains Mono (bundled, SIL OFL).
 
 ### Added
 - Restyled deck list, deck overview, top toolbar, reviewer answer bar and Qt menus/scrollbars, following Anki's light and dark themes.
+- Card browser: table, header and sidebar in the same palette (Anki's row, flag and selection colours are kept).
+- The "finished this deck" screen, Statistics and Deck Options follow the palette and fonts (colours and fonts only; their layout is Anki's). Can be turned off separately.
+- A Study button on each deck row with cards waiting; a welcome with create / import / shared-deck actions for a new, empty collection.
+- Optional, off by default: Japanese reading polish for card content (Japanese font for `lang="ja"` text, tidy furigana, furigana on hover / answer side). Zero-specificity rules, so note-type styling always wins.
 - Home screen panels: cards-waiting headline with per-deck Study button and pace estimate, Today, 26-week Activity heatmap with current and best streak, and a Next 7 days forecast. All figures are read-only queries (manual and rescheduled review entries are excluded, matching Anki's own "studied today").
 - Eight accent colours, comfortable and compact density, optional ease colours on answer buttons.
 - Tools > Refine menu with a Settings dialog (live changes, reset to defaults) and a Diagnostics dialog.
@@ -18,6 +22,8 @@ First installable build.
 
 ### Compatibility
 - Anki Desktop 25.09 to 26.09.3. Tested on Windows only.
+- Verified in Anki 25.09.5 and 26.09.3: all reviewer keyboard shortcuts and answer buttons behave as stock; the card area is pixel-identical to stock Anki (size and content, light and dark); settings apply live without re-rendering the reviewer.
+- Verified alongside Migaku (which changes the answer buttons) and AnkiConnect.
 
 ### Notes
 - Refine writes nothing to the collection and makes no network requests.

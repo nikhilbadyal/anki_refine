@@ -326,12 +326,53 @@ def import_colpkg(target: Target, base: Path, colpkg: Path) -> None:
         raise SystemExit(f"colpkg import failed:\n{res.stdout}\n{res.stderr}")
 
 
-def shots(target: Target, keep_profile: bool, timeout_s: int = 300, colpkg: Path | None = None, tag: str = "") -> list[Path]:
+_INSTALL_PACKAGE = r"""
+import sys, types
+from aqt.addons import AddonManager
+addons_dir, package = sys.argv[1:3]
+# Anki's own installer (zip validation, extraction, meta.json), with a
+# stand-in for mw that only provides the add-ons folder.
+am = AddonManager.__new__(AddonManager)
+am.mw = types.SimpleNamespace(pm=types.SimpleNamespace(addonFolder=lambda: addons_dir))
+result = am.install(package)
+print(type(result).__name__, getattr(result, "name", ""), getattr(result, "errmsg", ""))
+"""
+
+
+def install_package(target: Target, base: Path, package: Path) -> str:
+    """Install a built .ankiaddon into the isolated profile with Anki's own
+    AddonManager.install(), exactly as Tools > Add-ons > Install from file."""
+    res = subprocess.run(
+        [str(_seed_python(target)), "-c", _INSTALL_PACKAGE, str(base / "addons21"), str(package)],
+        capture_output=True,
+        text=True,
+    )
+    if res.returncode != 0 or not res.stdout.startswith("InstallOk"):
+        raise SystemExit(f"package install failed: {res.stdout} {res.stderr}")
+    return res.stdout.strip()
+
+
+def shots(
+    target: Target,
+    keep_profile: bool,
+    timeout_s: int = 300,
+    colpkg: Path | None = None,
+    tag: str = "",
+    package: Path | None = None,
+) -> list[Path]:
     out = UI_OUT / (target.name + (f"-{tag}" if tag else ""))
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
-    base = setup(target, fresh=not keep_profile, probe=False, probes=(("refine_ui_probe", UI_PROBE_SRC),))
+    base = setup(
+        target,
+        fresh=not keep_profile,
+        probe=False,
+        probes=(("refine_ui_probe", UI_PROBE_SRC),),
+        refine=package is None,
+    )
+    if package is not None:
+        print(f"{target.name}: installed {package.name}: {install_package(target, base, package)}")
     if colpkg is not None:
         import_colpkg(target, base, colpkg)
     env = _env(target, 0, None)
@@ -595,6 +636,7 @@ def main() -> None:
     sh.add_argument("--keep-profile", action="store_true")
     sh.add_argument("--colpkg", type=Path, help="restore this .colpkg backup into the isolated profile (read-only use)")
     sh.add_argument("--tag", default="", help="suffix for the output folder, e.g. 'real'")
+    sh.add_argument("--from-package", type=Path, help="install this built .ankiaddon instead of linking src/refine")
     vf = sub.add_parser("verify")
     vf.add_argument("target", choices=TARGETS)
     vf.add_argument("--without-refine", action="store_true", help="do not link the Refine add-on (baseline run)")
@@ -635,7 +677,7 @@ def main() -> None:
                 print(f"{name}: skipped, not installed ({t.command[0]})")
                 continue
             print(f"{name}: capturing screenshots ...", flush=True)
-            for png in shots(t, a.keep_profile, colpkg=a.colpkg, tag=a.tag):
+            for png in shots(t, a.keep_profile, colpkg=a.colpkg, tag=a.tag, package=a.from_package):
                 print(f"  {png}")
     elif a.cmd == "verify":
         t = TARGETS[a.target]
