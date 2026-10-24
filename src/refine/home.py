@@ -146,32 +146,50 @@ def fmt_duration(ms: float) -> str:
     return f"{h} h {m} min" if m else f"{h} h"
 
 
-def hero_html(t: Totals, target_name: str | None, target_id: int | None, now: datetime.date | None = None) -> str:
+def hero_title(due: int) -> str:
+    return f"{fmt_int(due)} card{'s' if due != 1 else ''} waiting" if due else "All caught up"
+
+
+def hero_html(
+    t: Totals,
+    deck_name: str | None,
+    deck_id: int | None,
+    now: datetime.date | None = None,
+) -> str:
+    """The headline. With a deck selected it shows that deck's numbers and a
+    Study button; with none selected, all decks combined. refine.js updates
+    the same elements in place when the selection changes (no reload)."""
     now = now or datetime.date.today()
     date = now.strftime("%A, %B ") + str(now.day)
-    if t.due:
-        title = f"{fmt_int(t.due)} card{'s' if t.due != 1 else ''} waiting"
-    else:
-        title = "All caught up"
+    scope = html.escape(deck_name) if deck_name else "All decks"
     counts = (
-        f'<span class="rf-stat"><b class="rf-c-new">{fmt_int(t.new)}</b> new</span>'
-        f'<span class="rf-stat"><b class="rf-c-learn">{fmt_int(t.learn)}</b> learning</span>'
-        f'<span class="rf-stat"><b class="rf-c-review">{fmt_int(t.review)}</b> due</span>'
+        f'<span class="rf-stat"><b class="rf-c-new" data-rf="new">{fmt_int(t.new)}</b> new</span>'
+        f'<span class="rf-stat"><b class="rf-c-learn" data-rf="learn">{fmt_int(t.learn)}</b> learning</span>'
+        f'<span class="rf-stat"><b class="rf-c-review" data-rf="review">{fmt_int(t.review)}</b> due</span>'
         '<span class="rf-stat rf-faint" id="rf-pace"></span>'
     )
-    button = ""
-    if target_id is not None and t.due:
-        name = html.escape(target_name or "")
-        button = (
-            f'<button class="rf-btn rf-btn-primary rf-btn-lg" title="Study {name}" '
-            f"onclick=\"return pycmd('refine:deck_browser:study:{int(target_id)}')\">"
-            f'Study <span class="rf-hero-deck">{name}</span></button>'
-        )
     return (
-        '<section class="rf-hero rf-panel" aria-label="Today\'s cards">'
-        f'<div class="rf-hero-text"><div class="rf-muted rf-hero-date">{html.escape(date)}</div>'
-        f'<h1 class="rf-hero-title">{title}</h1>'
-        f'<div class="rf-hero-counts">{counts}</div></div>{button}</section>'
+        '<section class="rf-hero rf-panel" aria-label="Cards waiting" aria-live="polite">'
+        '<div class="rf-hero-text">'
+        f'<div class="rf-muted rf-hero-date"><span class="rf-hero-scope">{scope}</span>'
+        f' · {html.escape(date)}</div>'
+        f'<h1 class="rf-hero-title">{hero_title(t.due)}</h1>'
+        f'<div class="rf-hero-counts">{counts}</div></div>'
+        f'<div class="rf-hero-action">{hero_action(deck_name, deck_id, t.due)}</div>'
+        "</section>"
+    )
+
+
+def hero_action(deck_name: str | None, deck_id: int | None, due: int) -> str:
+    if deck_id is None:
+        return '<span class="rf-hero-hint rf-muted">Choose a deck below to study it</span>'
+    name = html.escape(deck_name or "")
+    if not due:
+        return f'<span class="rf-hero-hint rf-muted">Nothing due in {name}</span>'
+    return (
+        f'<button class="rf-btn rf-btn-primary rf-btn-lg" title="Study {name}" '
+        f"onclick=\"return pycmd('refine:deck_browser:study:{int(deck_id)}')\">"
+        f'Study <span class="rf-hero-deck">{name}</span></button>'
     )
 
 

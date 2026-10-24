@@ -111,7 +111,7 @@ html.refine .rf-bars { display: flex; align-items: flex-end; gap: 6px; height: 7
 html.refine .rf-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; height: 100%; }
 html.refine .rf-bar { width: 100%; min-height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--rf-accent) 45%, var(--rf-surface)); }
 html.refine .rf-bar.rf-bar-now { background: var(--rf-primary-bg); }
-html.refine .rf-bar-col span { font-size: 10.5px; }
+html.refine .rf-bar-col span { font-size: 11px; }
 
 /* ------------------------------------------------------------ deck table */
 
@@ -157,7 +157,7 @@ html.refine.rf-s-deck_browser.rf-compact tr.deck[data-rf-depth]:not([data-rf-dep
 html.refine.rf-s-deck_browser tr.top-level-drag-row + tr.deck td { border-top-color: transparent; }
 html.refine.rf-s-deck_browser tr.deck:hover td { background: var(--rf-overlay); }
 html.refine.rf-s-deck_browser tr.deck.current td { background: var(--rf-accent-soft); }
-html.refine.rf-s-deck_browser tr.deck.current td.decktd { box-shadow: inset 3px 0 0 var(--rf-accent); }
+html.refine.rf-s-deck_browser tr.deck.current a.deck { color: var(--rf-accent-text); font-weight: 600; }
 html.refine.rf-s-deck_browser tr.drag-hover td { border-bottom: 2px solid var(--rf-accent); }
 
 html.refine.rf-s-deck_browser td.decktd { padding-inline-start: 20px; max-width: none; overflow: hidden; text-overflow: ellipsis; }
@@ -244,3 +244,69 @@ html.refine .rf-onboarding-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 /* nothing to chart yet: hide the side column and use the full width */
 html.refine.rf-s-deck_browser.rf-page-DeckBrowser center:has(.rf-onboarding) { grid-template-columns: minmax(0, 1fr); max-width: 900px; }
 html.refine.rf-s-deck_browser.rf-page-DeckBrowser center:has(.rf-onboarding) > .rf-side { display: none; }
+
+/* ------------------------------------------------ selection (click mode) */
+
+/* Rows are clickable as a whole; the highlight follows the selection on
+   Home rather than Anki's internal "current deck". */
+html.refine.rf-s-deck_browser.rf-click-select tr.deck { cursor: pointer; }
+html.refine.rf-s-deck_browser.rf-click-select tr.deck.current:not(.rf-selected) td { background: transparent; }
+html.refine.rf-s-deck_browser.rf-click-select tr.deck.current:not(.rf-selected) a.deck { color: var(--rf-text); font-weight: 500; }
+html.refine.rf-s-deck_browser.rf-click-select tr.deck:hover td { background: var(--rf-overlay); }
+html.refine.rf-s-deck_browser.rf-click-select tr.deck.rf-selected td { background: var(--rf-accent-soft); }
+html.refine.rf-s-deck_browser.rf-click-select tr.deck.rf-selected a.deck { color: var(--rf-accent-text); }
+html.refine.rf-s-deck_browser.rf-click-select tr.deck.rf-selected a.deck { font-weight: 600; }
+
+/* --------------------------------------------- expand/collapse chevron */
+
+html.refine.rf-s-deck_browser a.collapse {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  margin-inline-end: 4px;
+  vertical-align: middle;
+  border-radius: 6px;
+  font-size: 0;
+  color: var(--rf-text-faint);
+}
+html.refine.rf-s-deck_browser a.collapse::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translate(-65%, -50%) rotate(-45deg);
+  transition: transform var(--rf-dur) var(--rf-ease);
+}
+html.refine.rf-s-deck_browser a.collapse.rf-open::before { transform: translate(-50%, -70%) rotate(45deg); }
+html.refine.rf-s-deck_browser a.collapse:hover { background: var(--rf-surface-hover); color: var(--rf-text); }
+html.refine.rf-s-deck_browser span.collapse { width: 24px; }
+
+/* --------------------------------------------------------- info button */
+
+html.refine.rf-s-deck_browser .rf-row-info {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin-inline-end: 2px;
+  vertical-align: middle;
+  border: 0;
+  background: transparent;
+  color: var(--rf-text-faint);
+  border-radius: var(--rf-radius-s);
+}
+html.refine.rf-s-deck_browser .rf-row-info:hover { background: var(--rf-surface-hover); color: var(--rf-text); }
+html:not(.rf-s-deck_browser) .rf-row-info { display: none !important; }
+
+/* ------------------------------------------------------- headline action */
+
+html.refine .rf-hero-action { display: flex; align-items: center; min-height: 46px; }
+/* without a button, the hint sits on the counts' line instead of floating */
+html.refine .rf-hero-action:has(> .rf-hero-hint) { min-height: 0; padding-bottom: 1px; }
+html.refine .rf-hero-hint { font-size: var(--rf-text-s); }
+html.refine .rf-hero-scope { color: var(--rf-text); font-weight: 600; }

@@ -32,7 +32,14 @@ CONTRAST_RULES: List[Tuple[str, str, float]] = [
     ("hard", "surface", 3.0),
     ("good", "surface", 3.0),
     ("easy", "surface", 3.0),
-    ("text-faint", "surface", 3.0),
+    # faint text carries content (column headers, notes, key hints): AA, on
+    # every surface it appears on
+    ("text-faint", "surface", 4.5),
+    ("text-faint", "bg", 4.5),
+    ("text-faint", "surface-sunken", 4.5),
+    ("text-faint", "surface-hover", 4.5),
+    ("text-muted", "surface-active", 4.5),
+    ("muted-count", "surface", 4.5),
     ("primary-fg", "primary-bg", 4.5),
 ]
 
@@ -150,10 +157,10 @@ def tokens(night: bool, accent: str, density: str) -> Dict[str, str]:
     t.update(state)
     if night:
         t.update({"primary-bg": "#ECEBE7", "primary-fg": "#161514",
-                  "primary-hover": "#FFFFFF", "muted-count": "#55524C"})
+                  "primary-hover": "#FFFFFF", "muted-count": "#9B9890"})
     else:
         t.update({"primary-bg": "#1C1B19", "primary-fg": "#FFFFFF",
-                  "primary-hover": "#000000", "muted-count": "#B9B6AE"})
+                  "primary-hover": "#000000", "muted-count": "#67645E"})
     for k in ("again", "hard", "good", "easy"):
         t[k + "-soft"] = _rgba(t[k], soft_a)
     if night:

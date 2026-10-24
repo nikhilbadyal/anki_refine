@@ -99,7 +99,6 @@ html.refine .rf-key {
 
 html.refine .rf-shell-foot { margin-top: auto; }
 html.refine .rf-shell button.rf-sync { border: 1px solid var(--rf-border-strong); font-size: 13px; }
-html.refine .rf-sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rf-accent); flex: none; }
 
 /* -------------------------------------------------------------- header */
 
@@ -163,8 +162,7 @@ html.refine.rf-s-sidebar.rf-page-Overview center > table { margin-top: 12px; }
   html.refine .rf-brand-text,
   html.refine .rf-nav-label,
   html.refine .rf-key,
-  html.refine .rf-nav-heading,
-  html.refine .rf-sync-dot { display: none; }
+  html.refine .rf-nav-heading { display: none; }
   html.refine .rf-brand { padding: 0; }
   html.refine .rf-shell button.rf-nav-item { justify-content: center; padding: 9px; }
   html.refine.rf-s-sidebar body:has(> .rf-shell) { padding: 0 16px 32px calc(var(--rf-shell-w) + 16px) !important; }

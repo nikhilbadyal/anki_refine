@@ -34,7 +34,11 @@ class ReviewerSurface(WebSurface):
     css = ("reviewer-bottom.css",)
 
     def flags(self, cfg: dict) -> dict[str, bool]:
-        return {"rf-ease-colors": bool(cfg.get("reviewer", {}).get("ease_colors", True))}
+        rv = cfg.get("reviewer", {})
+        return {
+            "rf-ease-colors": bool(rv.get("ease_colors", True)),
+            "rf-two-buttons": bool(rv.get("two_buttons", True)),
+        }
 
     def contribute(self, ctx: Any, web_content: Any, context: Any, cfg: dict) -> None:
         web_content.head += canvas_css(".rf-s-reviewer")

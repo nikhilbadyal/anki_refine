@@ -183,5 +183,15 @@ class Motion(unittest.TestCase):
         self.assertEqual(config.normalize({"motion": "fast"})["motion"], "smooth")
 
 
+class TwoButtons(unittest.TestCase):
+    def test_two_buttons(self) -> None:
+        from refine import config
+
+        self.assertTrue(config.normalize(None)["reviewer"]["two_buttons"])
+        self.assertFalse(config.normalize({"reviewer": {"two_buttons": False}})["reviewer"]["two_buttons"])
+        self.assertTrue(config.normalize({"reviewer": {"two_buttons": "no"}})["reviewer"]["two_buttons"])
+        self.assertTrue(config.normalize({"reviewer": {"two_buttons": False}})["reviewer"]["ease_colors"])
+
+
 if __name__ == "__main__":
     unittest.main()

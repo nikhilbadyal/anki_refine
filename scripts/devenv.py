@@ -233,6 +233,16 @@ def run(target: Target, port: int) -> None:
     subprocess.run(_cmd(target, base), env=_env(target, port, None))
 
 
+def _kill_tree(proc: subprocess.Popen) -> None:
+    """Kill a dev Anki and its children. The venv's anki.exe is a launcher
+    whose Python child would otherwise survive, keep the profile's
+    single-instance lock and make the next run hang."""
+    if IS_WIN:
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+    else:
+        proc.kill()
+
+
 def _get_json(url: str) -> object | None:
     try:
         with urllib.request.urlopen(url, timeout=2) as r:
@@ -271,7 +281,7 @@ def snapshot(target: Target, port: int, timeout_s: int = 300) -> dict:
             time.sleep(0.5)
         if proc.poll() is None:
             cdp["killed_after_timeout"] = True
-            proc.kill()
+            _kill_tree(proc)
             proc.wait(timeout=30)
     finally:
         log.close()
@@ -388,7 +398,7 @@ def shots(
             proc.wait(timeout=timeout_s)
         except subprocess.TimeoutExpired:
             print(f"{target.name}: timed out after {timeout_s} s, killing")
-            proc.kill()
+            _kill_tree(proc)
             proc.wait(timeout=30)
     print(f"{target.name}: exit={proc.returncode} in {round(time.time() - started, 1)} s")
     return sorted(out.glob("*.png"))
@@ -418,7 +428,7 @@ def verify(target: Target, without_refine: bool, timeout_s: int = 420) -> Path:
             proc.wait(timeout=timeout_s)
         except subprocess.TimeoutExpired:
             print(f"{target.name}: timed out after {timeout_s} s, killing")
-            proc.kill()
+            _kill_tree(proc)
             proc.wait(timeout=30)
     print(f"{target.name}{' (no refine)' if without_refine else ''}: exit={proc.returncode} in {round(time.time() - started, 1)} s")
     return out / "verify.json"

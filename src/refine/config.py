@@ -28,7 +28,7 @@ DEFAULTS: Dict[str, Any] = {
     "accent": "jade",
     "density": "comfortable",
     "surfaces": {s: True for s in SURFACE_IDS},
-    "reviewer": {"ease_colors": True},
+    "reviewer": {"ease_colors": True, "two_buttons": True},
     "home": {k: True for k in HOME_IDS},
     "cards": {k: False for k in CARD_IDS},
     # cards per day for the Today panel; 0 = no goal
@@ -82,6 +82,8 @@ def normalize(raw: Optional[Mapping]) -> Dict[str, Any]:
         reviewer = raw.get("reviewer")
         if isinstance(reviewer, Mapping) and isinstance(reviewer.get("ease_colors"), bool):
             out["reviewer"]["ease_colors"] = reviewer["ease_colors"]
+        if isinstance(reviewer, Mapping) and isinstance(reviewer.get("two_buttons"), bool):
+            out["reviewer"]["two_buttons"] = reviewer["two_buttons"]
     except Exception:
         _log.exception("config normalize failed; using defaults")
         return copy.deepcopy(DEFAULTS)

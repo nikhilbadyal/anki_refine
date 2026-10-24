@@ -36,6 +36,10 @@ class DeckBrowserSurface(WebSurface):
         self._panels: dict[str, str] = {}
         self._panels_key: tuple | None = None
         self._render_key: tuple | None = None
+        # the deck selected on Home (None = all decks); Refine-only state, so
+        # "nothing selected" is possible even though Anki always has a current deck
+        self._selected: int | None = None
+        self._avg_ms = 0.0
 
     def flags(self, cfg: dict) -> dict[str, bool]:
         h = cfg.get("home", {})
@@ -70,52 +74,67 @@ class DeckBrowserSurface(WebSurface):
         if tree is None:
             tree = ctx.mw.col.sched.deck_due_tree()
         self._totals = home.totals(tree)
-        target_id, target_name = self._study_target(ctx, tree)
+        decks = self._deck_counts(tree)
+        if self._selected not in decks:
+            self._selected = None  # deck deleted or filtered away
         # panels are always emitted when Refine is on; CSS shows them only
         # under html.rf-s-deck_browser.rf-h-*, so toggles apply live
         if ctx.mw.col.card_count() == 0:
             # a new collection: a welcome with next steps, not "All caught up"
             hero = home.onboarding_html()
         else:
-            hero = home.hero_html(self._totals, target_name, target_id)
-        self._render_key = self._key(ctx)
-        if self._panels.get("pace"):
-            import html as _html
+            sel = decks.get(self._selected) if self._selected is not None else None
+            if sel:
+                t = home.Totals(new=sel["new"], learn=sel["learn"], review=sel["review"])
+                hero = home.hero_html(t, sel["name"], self._selected)
+            else:
+                t = self._totals
+                hero = home.hero_html(t, None, None)
+            pace = home.pace_text(t, home.HomeStats(avg_ms=self._avg_ms))
+            if pace:
+                import html as _html
 
-            hero = hero.replace(
-                'id="rf-pace"></span>', f'id="rf-pace">{_html.escape(self._panels["pace"])}</span>', 1
-            )
-        content.stats = hero + home.side_placeholder(self._panels) + content.stats
+                hero = hero.replace('id="rf-pace"></span>', f'id="rf-pace">{_html.escape(pace)}</span>', 1)
+        self._render_key = self._key(ctx)
+        data = {
+            "decks": {str(k): v for k, v in decks.items()},
+            "all": {"new": self._totals.new, "learn": self._totals.learn, "review": self._totals.review},
+            "selected": self._selected,
+            "avgMs": self._avg_ms,
+        }
+        # data for refine.js, which switches the headline in place on click
+        blob = json.dumps(data).replace("</", "<\\/")
+        content.stats = (
+            hero
+            + f'<script type="application/json" id="rf-deck-data">{blob}</script>'
+            + home.side_placeholder(self._panels)
+            + content.stats
+        )
+
+    @staticmethod
+    def _deck_counts(tree: Any) -> dict[int, dict]:
+        """deck id -> its name (as shown in the list) and due counts, which
+        include subdecks, as in Anki's own list."""
+        out: dict[int, dict] = {}
+
+        def walk(node: Any) -> None:
+            for c in node.children:
+                out[int(c.deck_id)] = {
+                    "name": c.name,
+                    "new": c.new_count,
+                    "learn": c.learn_count,
+                    "review": c.review_count,
+                }
+                walk(c)
+
+        walk(tree)
+        return out
 
     def _key(self, ctx: Any) -> tuple:
         """Changes whenever the panel figures could: any collection change,
         a new day, or a different daily goal."""
         col = ctx.mw.col
         return (col.mod, col.sched.today, ctx.config.get().get("daily_goal", 0))
-
-    def _study_target(self, ctx: Any, tree: Any) -> tuple[int | None, str | None]:
-        """The current deck if it has cards waiting, else the first top-level
-        deck that does. Anki has no "study everything" queue, so the hero
-        button is explicit about which deck it opens."""
-        col = ctx.mw.col
-        current = col.decks.get_current_id()
-
-        def find(node: Any) -> Any:
-            if node.deck_id == current:
-                return node
-            for c in node.children:
-                hit = find(c)
-                if hit is not None:
-                    return hit
-            return None
-
-        node = find(tree)
-        if node is not None and (node.new_count + node.learn_count + node.review_count):
-            return node.deck_id, col.decks.name(node.deck_id)
-        for c in tree.children:
-            if c.new_count + c.learn_count + c.review_count:
-                return c.deck_id, c.name
-        return None, None
 
     def _did_render(self, ctx: Any, deck_browser: Any) -> None:
         if not ctx.config.get().get("enabled"):
@@ -136,10 +155,11 @@ class DeckBrowserSurface(WebSurface):
                 "rf-today": home.today_html(stats, totals, int(ctx.config.get().get("daily_goal", 0))),
                 "rf-activity": home.activity_html(stats),
                 "rf-forecast": home.forecast_html(stats),
-                "pace": home.pace_text(totals, stats),
             }
             changed = {k: v for k, v in payload.items() if self._panels.get(k) != v}
-            self._panels, self._panels_key = payload, key
+            if stats.avg_ms != self._avg_ms:
+                changed["avgMs"] = stats.avg_ms
+            self._panels, self._panels_key, self._avg_ms = payload, key, stats.avg_ms
             if changed:  # only touch the page if something differs
                 ctx.mw.web.eval(f"window.rfFillHome && window.rfFillHome({json.dumps(changed)});")
 
@@ -163,7 +183,10 @@ class DeckBrowserSurface(WebSurface):
         if verb == "study" and arg.isdigit():
             self._study(ctx, int(arg))
         elif verb == "select" and arg.isdigit():
+            self._selected = int(arg)
             self._select(ctx, int(arg))
+        elif verb == "deselect":
+            self._selected = None
 
     def _select(self, ctx: Any, deck_id: int) -> None:
         """Make a deck current and stay on Home. Same operation as Anki's

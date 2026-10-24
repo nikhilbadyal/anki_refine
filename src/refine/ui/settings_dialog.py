@@ -290,6 +290,11 @@ class _SettingsDialog(QDialog):
             self._safe(lambda v: self._set("reviewer.ease_colors", bool(v)))
         )
         root.addWidget(self._ease)
+        self._two = QCheckBox("Show only Again and Good (keys 2 and 4 still work)")
+        self._two.toggled.connect(
+            self._safe(lambda v: self._set("reviewer.two_buttons", bool(v)))
+        )
+        root.addWidget(self._two)
         root.addWidget(self._rule())
 
         # Cards (opt-in: the only settings that affect card content)
@@ -344,7 +349,7 @@ class _SettingsDialog(QDialog):
             + [self._surface[s] for s in SURFACE_IDS]
             + [self._home[h] for h, _l in _HOME]
             + [self._goal, self._click["select"], self._click["overview"]]
-            + [self._ease, self._ja, self._furi, self._reset_btn, self._log_btn, self._close_btn]
+            + [self._ease, self._two, self._ja, self._furi, self._reset_btn, self._log_btn, self._close_btn]
         )
         for a, b in zip(chain, chain[1:]):
             QDialog.setTabOrder(a, b)
@@ -387,6 +392,7 @@ class _SettingsDialog(QDialog):
                 cb.setChecked(bool(home.get(hid, True)))
                 cb.setEnabled(enabled)
             self._ease.setChecked(bool((cfg.get("reviewer") or {}).get("ease_colors", True)))
+            self._two.setChecked(bool((cfg.get("reviewer") or {}).get("two_buttons", True)))
             self._goal.setValue(int(cfg.get("daily_goal", 0) or 0))
             for value, rb in self._motion.items():
                 rb.setChecked(cfg.get("motion", "smooth") == value)

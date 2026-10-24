@@ -613,38 +613,46 @@ class Probe:
     # Click on a deck name: selects it and stays on Home; double-click opens
     # the overview; Esc on the overview returns Home.
     def step_deck_click(self, nxt: Next) -> None:
+        """Click anywhere on a row selects it (headline shows that deck);
+        clicking empty space deselects (all decks); the info button opens the
+        overview; Esc returns Home."""
         mw = _mw()
         out: dict[str, Any] = {}
         self.r["deck_click"] = out
-        pick = ("(function(){var r=document.querySelector('tr.deck.rf-has-due:not(.current) a.deck');"
-                "if(!r) return null; var name=r.textContent.trim(); %s; return name;})()")
+        hero_js = ("(function(){var h=document.querySelector('.rf-hero');if(!h)return null;"
+                   "return JSON.stringify({scope:(h.querySelector('.rf-hero-scope')||{}).textContent,"
+                   "title:(h.querySelector('.rf-hero-title')||{}).textContent,"
+                   "action:(h.querySelector('.rf-hero-action')||{}).textContent,"
+                   "selected:(document.querySelector('tr.deck.rf-selected a.deck')||{}).textContent||null});})()")
+
+        def read(key: str, then: Next) -> None:
+            def got(v: Any) -> None:
+                out[key] = {"state": mw.state, "hero": json.loads(v) if isinstance(v, str) else v,
+                            "anki_current": mw.col.decks.name(mw.col.decks.get_current_id())}
+                then()
+            self.later(800, lambda: mw.web.evalWithCallback(hero_js, got))
 
         def start() -> None:
-            js = pick % "r.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}))"
-            mw.web.evalWithCallback(js, clicked)
+            read("initial", click_row)
 
-        def clicked(name: Any) -> None:
-            out["clicked"] = name
-            self.later(2000, after_click)
+        def click_row() -> None:
+            # click the counts cell of a row with cards (not the name link)
+            mw.web.eval("(function(){var td=document.querySelector('tr.deck.rf-has-due td[align=end]');"
+                        "if(td) td.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));})()")
+            read("after_row_click", shot)
 
-        def after_click() -> None:
-            def got(hero: Any) -> None:
-                out["after_click"] = {
-                    "state": mw.state,
-                    "current_deck": mw.col.decks.name(mw.col.decks.get_current_id()),
-                    "hero_button": hero,
-                }
-                theme = "dark" if mw.pm.theme() == 2 else "light"
-                self.shoot(theme, "deck_selected")
-                js = pick % "r.dispatchEvent(new MouseEvent('dblclick',{bubbles:true,cancelable:true,detail:2}))"
-                mw.web.evalWithCallback(js, lambda n: self.later(2000, after_dbl))
+        def shot() -> None:
+            theme = "dark" if mw.pm.theme() == 2 else "light"
+            self.shoot(theme, "deck_selected")
+            mw.web.eval("document.querySelector('.rf-side, body').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))")
+            read("after_click_elsewhere", info)
 
-            mw.web.evalWithCallback(
-                "(function(){var b=document.querySelector('.rf-hero .rf-btn-primary');return b?b.textContent:null;})()", got
-            )
+        def info() -> None:
+            mw.web.eval("(function(){var b=document.querySelector('tr.deck .rf-row-info');if(b) b.click();})()")
+            self.later(2000, after_info)
 
-        def after_dbl() -> None:
-            out["after_dblclick"] = {"state": mw.state}
+        def after_info() -> None:
+            out["after_info_button"] = {"state": mw.state}
             mw.web.eval("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))")
             self.later(2000, after_esc)
 

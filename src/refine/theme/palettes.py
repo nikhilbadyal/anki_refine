@@ -37,8 +37,9 @@ NEUTRAL_LIGHT: Dict[str, str] = {
     "border": "rgba(0, 0, 0, 0.07)",
     "border-strong": "rgba(0, 0, 0, 0.14)",
     "text": "#1C1B19",
-    "text-muted": "#6B6862",
-    "text-faint": "#8C8981",
+    # muted/faint both meet WCAG AA (4.5:1) on every surface they sit on
+    "text-muted": "#57544E",
+    "text-faint": "#67645E",
     "overlay": "rgba(0, 0, 0, 0.035)",
 }
 
@@ -51,8 +52,8 @@ NEUTRAL_DARK: Dict[str, str] = {
     "border": "rgba(255, 255, 255, 0.06)",
     "border-strong": "rgba(255, 255, 255, 0.12)",
     "text": "#ECEBE7",
-    "text-muted": "#A3A098",
-    "text-faint": "#6E6B64",
+    "text-muted": "#B5B2A9",
+    "text-faint": "#9B9890",
     "overlay": "rgba(255, 255, 255, 0.04)",
 }
 

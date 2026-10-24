@@ -98,7 +98,7 @@ def sidebar_html(active: str, profile: str, extras: list[tuple[str, str]]) -> st
         f"{extra}"
         '<div class="rf-shell-foot">'
         f'<button class="rf-nav-item rf-sync" type="button" onclick="{_cmd("go:sync")}" title="Sync (Y)">'
-        f'{icon("sync")}<span class="rf-nav-label">Sync</span><span class="rf-sync-dot" aria-hidden="true"></span>'
+        f'{icon("sync")}<span class="rf-nav-label">Sync</span>'
         '<kbd class="rf-key">Y</kbd></button>'
         "</div></nav>"
     )

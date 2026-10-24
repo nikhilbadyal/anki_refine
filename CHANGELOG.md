@@ -2,6 +2,20 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## Unreleased
+
+- Reviewer: redesigned answer buttons (interval inside the button, tinted Again/Good); by default only Again and Good show (keys 2 and 4 still work), switchable in Settings.
+
+## [0.2.3] - 2026-10-24
+
+### Changed
+- **Home: click anywhere on a deck row to select it.** The headline then shows that deck's cards waiting, counts, time estimate and a Study button. With nothing selected it shows all decks combined; click empty space or press Esc to deselect.
+- An **info button** (ⓘ) on each row opens the deck's overview (double-click still works).
+- Expand/collapse is now a chevron instead of + / −.
+- **Answer bar:** redesigned Again / Good buttons with the interval inside the button; only Again and Good are shown by default (keys 2 and 4 still answer Hard / Easy; Settings ▸ Reviewer to show all four).
+- Accessibility (impeccable audit): secondary and faint text now meet WCAG AA contrast everywhere (live detector: 0 findings); selected rows marked without a side stripe and announced to screen readers; forecast labels enlarged; removed a sync dot that implied a status Refine can't know.
+
+
 ## [0.2.2] - 2026-10-24
 
 ### Changed (smoothness)
