@@ -152,6 +152,7 @@ class Probe:
                 (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
+        steps.append(("deck_click", self.step_deck_click))
         steps.append(("stats_inline", self.step_stats_inline))
         steps.append(("diagnostics", self.step_diagnostics))
         steps.append(("goal", self.step_goal))
@@ -607,6 +608,58 @@ class Probe:
             mw.moveToState("deckBrowser")
         else:
             via_sidebar()
+
+    # Click on a deck name: selects it and stays on Home; double-click opens
+    # the overview; Esc on the overview returns Home.
+    def step_deck_click(self, nxt: Next) -> None:
+        mw = _mw()
+        out: dict[str, Any] = {}
+        self.r["deck_click"] = out
+        pick = ("(function(){var r=document.querySelector('tr.deck.rf-has-due:not(.current) a.deck');"
+                "if(!r) return null; var name=r.textContent.trim(); %s; return name;})()")
+
+        def start() -> None:
+            js = pick % "r.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}))"
+            mw.web.evalWithCallback(js, clicked)
+
+        def clicked(name: Any) -> None:
+            out["clicked"] = name
+            self.later(2000, after_click)
+
+        def after_click() -> None:
+            def got(hero: Any) -> None:
+                out["after_click"] = {
+                    "state": mw.state,
+                    "current_deck": mw.col.decks.name(mw.col.decks.get_current_id()),
+                    "hero_button": hero,
+                }
+                theme = "dark" if mw.pm.theme() == 2 else "light"
+                self.shoot(theme, "deck_selected")
+                js = pick % "r.dispatchEvent(new MouseEvent('dblclick',{bubbles:true,cancelable:true,detail:2}))"
+                mw.web.evalWithCallback(js, lambda n: self.later(2000, after_dbl))
+
+            mw.web.evalWithCallback(
+                "(function(){var b=document.querySelector('.rf-hero .rf-btn-primary');return b?b.textContent:null;})()", got
+            )
+
+        def after_dbl() -> None:
+            out["after_dblclick"] = {"state": mw.state}
+            mw.web.eval("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))")
+            self.later(2000, after_esc)
+
+        def after_esc() -> None:
+            out["after_escape"] = {"state": mw.state}
+            if mw.state != "deckBrowser":
+                self.wait_for("deck_browser_did_render", nxt, 10_000)
+                mw.moveToState("deckBrowser")
+            else:
+                nxt()
+
+        if mw.state != "deckBrowser":
+            self.wait_for("deck_browser_did_render", start, 10_000)
+            mw.moveToState("deckBrowser")
+        else:
+            start()
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()

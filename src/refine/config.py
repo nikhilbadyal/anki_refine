@@ -17,6 +17,8 @@ HOME_IDS = ("hero", "today", "activity", "forecast")
 # opt-in card-content layer; off by default because it touches card rendering
 CARD_IDS = ("japanese", "furigana_hover")
 MAX_DAILY_GOAL = 5000
+# what a click on a deck name in the home screen does
+DECK_CLICK = ("select", "overview")
 
 DEFAULTS: Dict[str, Any] = {
     "schema_version": 1,
@@ -29,6 +31,7 @@ DEFAULTS: Dict[str, Any] = {
     "cards": {k: False for k in CARD_IDS},
     # cards per day for the Today panel; 0 = no goal
     "daily_goal": 0,
+    "deck_click": "select",
 }
 
 _log = logging.getLogger("refine")
@@ -61,6 +64,8 @@ def normalize(raw: Optional[Mapping]) -> Dict[str, Any]:
             for h in HOME_IDS:
                 if isinstance(home.get(h), bool):
                     out["home"][h] = home[h]
+        if raw.get("deck_click") in DECK_CLICK:
+            out["deck_click"] = raw["deck_click"]
         goal = raw.get("daily_goal")
         if isinstance(goal, int) and not isinstance(goal, bool) and 0 <= goal <= MAX_DAILY_GOAL:
             out["daily_goal"] = goal

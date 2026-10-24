@@ -64,6 +64,35 @@
       if (due) tr.classList.add("rf-has-due");
       var link = tr.querySelector("a.deck");
       var name = link ? link.textContent.trim() : "";
+      if (link && /^\d+$/.test(tr.id)) {
+        // As in the design: a click selects the deck and stays on Home (the
+        // headline's Study button follows it); a double-click opens Anki's
+        // overview. With the "overview" setting, Anki's own handler runs.
+        (function (id) {
+          var pending = null;
+          link.addEventListener("click", function (ev) {
+            if (!document.documentElement.classList.contains("rf-click-select") || ev.shiftKey) return;
+            ev.preventDefault();
+            ev.stopImmediatePropagation(); // Anki's inline onclick would open the overview
+            // selecting re-renders the page, so wait briefly for a double-click
+            if (pending) clearTimeout(pending);
+            pending = setTimeout(function () {
+              pending = null;
+              pycmd("refine:deck_browser:select:" + id);
+            }, 250);
+          }, true);
+          link.addEventListener("dblclick", function (ev) {
+            if (!document.documentElement.classList.contains("rf-click-select")) return;
+            ev.preventDefault();
+            if (pending) {
+              clearTimeout(pending);
+              pending = null;
+            }
+            pycmd("open:" + id);
+          });
+        })(tr.id);
+        link.title = "Click to select · double-click for the overview";
+      }
       var opts = tr.querySelector("td.opts");
       if (opts && /^\d+$/.test(tr.id)) {
         var gear = opts.querySelector("a");
@@ -103,6 +132,14 @@
         ev.preventDefault();
         input.focus();
       }
+    }
+  });
+
+  // Overview: Esc goes back to Home.
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && document.documentElement.classList.contains("rf-page-Overview")) {
+      ev.preventDefault();
+      pycmd("decks");
     }
   });
 

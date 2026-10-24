@@ -252,6 +252,23 @@ class _SettingsDialog(QDialog):
         goal_row.addWidget(self._goal)
         goal_row.addStretch(1)
         root.addLayout(goal_row)
+        click_row = QHBoxLayout()
+        click_row.setContentsMargins(24, 0, 0, 0)
+        click_row.setSpacing(12)
+        click_row.addWidget(QLabel("Clicking a deck"))
+        self._click = {
+            "select": QRadioButton("Selects it"),
+            "overview": QRadioButton("Opens its overview"),
+        }
+        self._click["select"].setToolTip("Stay on Home; the headline's Study button follows the selected deck. Double-click opens the overview.")
+        self._click["overview"].setToolTip("Anki's usual behaviour.")
+        click_group = QButtonGroup(self)
+        for value, rb in self._click.items():
+            click_group.addButton(rb)
+            rb.toggled.connect(self._safe(lambda on, v=value: on and self._set("deck_click", v)))
+            click_row.addWidget(rb)
+        click_row.addStretch(1)
+        root.addLayout(click_row)
         root.addWidget(self._rule())
 
         # Reviewer
@@ -313,7 +330,7 @@ class _SettingsDialog(QDialog):
             + [self._enabled]
             + [self._surface[s] for s in SURFACE_IDS]
             + [self._home[h] for h, _l in _HOME]
-            + [self._goal]
+            + [self._goal, self._click["select"], self._click["overview"]]
             + [self._ease, self._ja, self._furi, self._reset_btn, self._log_btn, self._close_btn]
         )
         for a, b in zip(chain, chain[1:]):
@@ -358,6 +375,9 @@ class _SettingsDialog(QDialog):
                 cb.setEnabled(enabled)
             self._ease.setChecked(bool((cfg.get("reviewer") or {}).get("ease_colors", True)))
             self._goal.setValue(int(cfg.get("daily_goal", 0) or 0))
+            for value, rb in self._click.items():
+                rb.setChecked(cfg.get("deck_click", "select") == value)
+                rb.setEnabled(enabled)
             self._goal.setEnabled(enabled and bool(home.get("today", True)))
             cards = cfg.get("cards") or {}
             self._ja.setChecked(bool(cards.get("japanese", False)))

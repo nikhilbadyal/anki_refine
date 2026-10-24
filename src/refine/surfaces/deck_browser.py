@@ -20,7 +20,11 @@ from .base import WebSurface
 
 class DeckBrowserSurface(WebSurface):
     id = "deck_browser"
-    requires_hooks = ("deck_browser_will_render_content", "deck_browser_did_render")
+    requires_hooks = (
+        "deck_browser_will_render_content",
+        "deck_browser_did_render",
+        "deck_browser_will_show_options_menu",
+    )
     contexts = ("DeckBrowser", "DeckBrowserBottomBar")
     css = ("deck-browser.css",)
 
@@ -30,17 +34,23 @@ class DeckBrowserSurface(WebSurface):
 
     def flags(self, cfg: dict) -> dict[str, bool]:
         h = cfg.get("home", {})
-        return {f"rf-h-{k}": bool(v) for k, v in h.items()}
+        out = {f"rf-h-{k}": bool(v) for k, v in h.items()}
+        # read by refine.js at click time, so the setting applies live
+        out["rf-click-select"] = cfg.get("deck_click", "select") == "select"
+        return out
 
     def install(self, ctx: Any) -> None:
         self._will = ctx.guard.wrap(self.id, lambda db, content: self._will_render(ctx, db, content))
         self._did = ctx.guard.wrap(self.id, lambda db: self._did_render(ctx, db))
         gui_hooks.deck_browser_will_render_content.append(self._will)
         gui_hooks.deck_browser_did_render.append(self._did)
+        self._menu = ctx.guard.wrap(self.id, lambda menu, did: self._options_menu(ctx, menu, did))
+        gui_hooks.deck_browser_will_show_options_menu.append(self._menu)
 
     def uninstall(self, ctx: Any) -> None:
         gui_hooks.deck_browser_will_render_content.remove(self._will)
         gui_hooks.deck_browser_did_render.remove(self._did)
+        gui_hooks.deck_browser_will_show_options_menu.remove(self._menu)
 
     def _active(self, ctx: Any) -> bool:
         cfg = ctx.config.get()
@@ -128,6 +138,27 @@ class DeckBrowserSurface(WebSurface):
         verb, _, arg = cmd.partition(":")
         if verb == "study" and arg.isdigit():
             self._study(ctx, int(arg))
+        elif verb == "select" and arg.isdigit():
+            self._select(ctx, int(arg))
+
+    def _select(self, ctx: Any, deck_id: int) -> None:
+        """Make a deck current and stay on Home (the headline's Study button
+        follows it). Same operation as Anki's Shift-click on a row."""
+        from aqt.operations.deck import set_current_deck
+
+        mw = ctx.mw
+        set_current_deck(parent=mw, deck_id=deck_id).success(
+            lambda _: mw.deckBrowser.refresh() if mw.state == "deckBrowser" else None
+        ).run_in_background()
+
+    def _options_menu(self, ctx: Any, menu: Any, deck_id: int) -> None:
+        """Adds "Open overview" to a deck's ⋯ menu, since a click on the deck
+        name now stays on Home."""
+        if not ctx.config.get().get("enabled"):
+            return
+        menu.addSeparator()
+        action = menu.addAction("Open overview")
+        action.triggered.connect(ctx.guard.wrap(self.id, lambda *_: ctx.mw.deckBrowser.set_current_deck(deck_id)))
 
     def _study(self, ctx: Any, deck_id: int) -> None:
         # same steps as the overview's "Study Now" (aqt/overview.py _linkHandler)

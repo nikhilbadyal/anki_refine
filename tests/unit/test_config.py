@@ -165,5 +165,14 @@ class DailyGoal(unittest.TestCase):
             self.assertEqual(config.normalize({"daily_goal": bad})["daily_goal"], 0, bad)
 
 
+class DeckClick(unittest.TestCase):
+    def test_deck_click_values(self) -> None:
+        from refine import config
+
+        self.assertEqual(config.normalize(None)["deck_click"], "select")
+        self.assertEqual(config.normalize({"deck_click": "overview"})["deck_click"], "overview")
+        self.assertEqual(config.normalize({"deck_click": "jump"})["deck_click"], "select")
+
+
 if __name__ == "__main__":
     unittest.main()
