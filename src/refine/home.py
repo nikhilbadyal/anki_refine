@@ -210,16 +210,26 @@ def side_placeholder() -> str:
     )
 
 
-def today_html(s: HomeStats, t: Totals) -> str:
-    total = s.today_cards + t.due
-    pct = 0 if total == 0 else round(100 * s.today_cards / total)
+def today_html(s: HomeStats, t: Totals, goal: int = 0) -> str:
     tomorrow = s.forecast[1] if len(s.forecast) > 1 else 0
-    if t.due == 0 and s.today_cards:
-        note = "Done for today."
-    elif t.due == 0:
-        note = "Nothing due today."
+    if goal > 0:
+        # progress towards the user's daily goal
+        pct = min(100, round(100 * s.today_cards / goal))
+        left = goal - s.today_cards
+        note = (
+            f"Goal of {fmt_int(goal)} reached." if left <= 0
+            else f"{fmt_int(left)} more to reach today’s goal of {fmt_int(goal)}."
+        )
     else:
-        note = f"Clearing today’s cards leaves ≈ {fmt_int(tomorrow)} for tomorrow."
+        # progress through what is due today
+        total = s.today_cards + t.due
+        pct = 0 if total == 0 else round(100 * s.today_cards / total)
+        if t.due == 0 and s.today_cards:
+            note = "Done for today."
+        elif t.due == 0:
+            note = "Nothing due today."
+        else:
+            note = f"Clearing today’s cards leaves ≈ {fmt_int(tomorrow)} for tomorrow."
     return (
         f'<div class="rf-big"><span class="rf-big-num">{fmt_int(s.today_cards)}</span>'
         f'<span class="rf-muted">card{"s" if s.today_cards != 1 else ""} studied · {fmt_duration(s.today_ms)}</span></div>'

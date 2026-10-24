@@ -187,7 +187,7 @@ class Registry:
         if "enabled" in changed and cfg.get("enabled"):
             # webviews rendered while disabled lack our assets
             self.refresh_screens(toolbar=True)
-        if any(p.startswith("home.") for p in changed):
+        if any(p.startswith("home.") or p == "daily_goal" for p in changed):
             self.refresh_screens()
         self.push_live(cfg)
         for s in self.active_surfaces():

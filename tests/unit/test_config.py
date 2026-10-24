@@ -154,5 +154,16 @@ class CardsSection(unittest.TestCase):
         got = config.normalize({"cards": {"japanese": True, "furigana_hover": "yes", "bogus": 1}})
         self.assertEqual(got["cards"], {"japanese": True, "furigana_hover": False})
 
+
+class DailyGoal(unittest.TestCase):
+    def test_goal_validation(self) -> None:
+        from refine import config
+
+        self.assertEqual(config.normalize(None)["daily_goal"], 0)
+        self.assertEqual(config.normalize({"daily_goal": 150})["daily_goal"], 150)
+        for bad in (-1, 10**6, "100", True, 3.5, None):
+            self.assertEqual(config.normalize({"daily_goal": bad})["daily_goal"], 0, bad)
+
+
 if __name__ == "__main__":
     unittest.main()

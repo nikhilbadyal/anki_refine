@@ -16,6 +16,7 @@ SURFACE_IDS = ("toolbar", "deck_browser", "overview", "reviewer", "qt_chrome", "
 HOME_IDS = ("hero", "today", "activity", "forecast")
 # opt-in card-content layer; off by default because it touches card rendering
 CARD_IDS = ("japanese", "furigana_hover")
+MAX_DAILY_GOAL = 5000
 
 DEFAULTS: Dict[str, Any] = {
     "schema_version": 1,
@@ -26,6 +27,8 @@ DEFAULTS: Dict[str, Any] = {
     "reviewer": {"ease_colors": True},
     "home": {k: True for k in HOME_IDS},
     "cards": {k: False for k in CARD_IDS},
+    # cards per day for the Today panel; 0 = no goal
+    "daily_goal": 0,
 }
 
 _log = logging.getLogger("refine")
@@ -58,6 +61,9 @@ def normalize(raw: Optional[Mapping]) -> Dict[str, Any]:
             for h in HOME_IDS:
                 if isinstance(home.get(h), bool):
                     out["home"][h] = home[h]
+        goal = raw.get("daily_goal")
+        if isinstance(goal, int) and not isinstance(goal, bool) and 0 <= goal <= MAX_DAILY_GOAL:
+            out["daily_goal"] = goal
         cards = raw.get("cards")
         if isinstance(cards, Mapping):
             for c in CARD_IDS:

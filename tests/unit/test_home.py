@@ -234,5 +234,24 @@ class Onboarding(unittest.TestCase):
         self.assertNotIn("caught up", out)
 
 
+class TodayGoal(unittest.TestCase):
+    def test_goal_progress_and_notes(self) -> None:
+        s = HomeStats(today_cards=40, forecast=[5, 3])
+        t = Totals(new=10, learn=0, review=20)
+        out = home.today_html(s, t, goal=100)
+        self.assertIn('aria-valuenow="40"', out)
+        self.assertIn("60 more", out)
+        done = home.today_html(HomeStats(today_cards=120, forecast=[0, 0]), t, goal=100)
+        self.assertIn('aria-valuenow="100"', done)
+        self.assertIn("reached", done)
+
+    def test_no_goal_keeps_due_based_progress(self) -> None:
+        s = HomeStats(today_cards=10, forecast=[5, 7])
+        t = Totals(new=0, learn=0, review=30)
+        out = home.today_html(s, t)
+        self.assertIn('aria-valuenow="25"', out)
+        self.assertIn("7 for tomorrow", out)
+
+
 if __name__ == "__main__":
     unittest.main()

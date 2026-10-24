@@ -15,6 +15,7 @@ from aqt.qt import (
     QPushButton,
     QRadioButton,
     QScrollArea,
+    QSpinBox,
     QSize,
     QToolButton,
     Qt,
@@ -22,7 +23,7 @@ from aqt.qt import (
     QWidget,
 )
 
-from ..config import DENSITIES, SURFACE_IDS
+from ..config import DENSITIES, MAX_DAILY_GOAL, SURFACE_IDS
 from ..theme.palettes import ACCENTS
 
 _dialog: Optional["_SettingsDialog"] = None
@@ -233,6 +234,23 @@ class _SettingsDialog(QDialog):
             cb.toggled.connect(self._safe(lambda v, h=hid: self._set("home." + h, bool(v))))
             root.addWidget(cb)
             self._home[hid] = cb
+        goal_row = QHBoxLayout()
+        goal_row.setContentsMargins(24, 0, 0, 0)
+        goal_row.setSpacing(8)
+        goal_label = QLabel("Daily goal")
+        self._goal = QSpinBox()
+        self._goal.setRange(0, MAX_DAILY_GOAL)
+        self._goal.setSingleStep(10)
+        self._goal.setSpecialValueText("Off")
+        self._goal.setSuffix(" cards")
+        self._goal.setAccessibleName("Daily goal in cards, 0 for off")
+        self._goal.setToolTip("Shown as progress in the Today panel. 0 turns the goal off.")
+        self._goal.valueChanged.connect(self._safe(lambda v: self._set("daily_goal", int(v))))
+        goal_label.setBuddy(self._goal)
+        goal_row.addWidget(goal_label)
+        goal_row.addWidget(self._goal)
+        goal_row.addStretch(1)
+        root.addLayout(goal_row)
         root.addWidget(self._rule())
 
         # Reviewer
@@ -294,6 +312,7 @@ class _SettingsDialog(QDialog):
             + [self._enabled]
             + [self._surface[s] for s in SURFACE_IDS]
             + [self._home[h] for h, _l in _HOME]
+            + [self._goal]
             + [self._ease, self._ja, self._furi, self._reset_btn, self._log_btn, self._close_btn]
         )
         for a, b in zip(chain, chain[1:]):
@@ -337,6 +356,8 @@ class _SettingsDialog(QDialog):
                 cb.setChecked(bool(home.get(hid, True)))
                 cb.setEnabled(enabled)
             self._ease.setChecked(bool((cfg.get("reviewer") or {}).get("ease_colors", True)))
+            self._goal.setValue(int(cfg.get("daily_goal", 0) or 0))
+            self._goal.setEnabled(enabled and bool(home.get("today", True)))
             cards = cfg.get("cards") or {}
             self._ja.setChecked(bool(cards.get("japanese", False)))
             self._furi.setChecked(bool(cards.get("furigana_hover", False)))

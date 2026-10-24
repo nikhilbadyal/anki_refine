@@ -102,7 +102,7 @@ class DeckBrowserSurface(WebSurface):
             if gen != self._generation or ctx.mw.state != "deckBrowser":
                 return  # a newer render superseded this one
             payload = {
-                "rf-today": home.today_html(stats, totals),
+                "rf-today": home.today_html(stats, totals, int(ctx.config.get().get("daily_goal", 0))),
                 "rf-activity": home.activity_html(stats),
                 "rf-forecast": home.forecast_html(stats),
                 "pace": home.pace_text(totals, stats),

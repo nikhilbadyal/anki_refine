@@ -152,6 +152,7 @@ class Probe:
                 (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
+        steps.append(("goal", self.step_goal))
         steps.append(("cards", self.step_cards))
         steps.append(("study_buttons", self.step_study_buttons))
         steps.append(("congrats", self.step_congrats))
@@ -476,6 +477,37 @@ class Probe:
             self.later(1200, nxt)
 
         self.later(4000, grab)
+
+    # Daily goal: setting it through Refine's config refreshes the home screen
+    # and the Today panel shows progress towards it.
+    def step_goal(self, nxt: Next) -> None:
+        mw = _mw()
+        out: dict[str, Any] = {}
+        self.r["daily_goal"] = out
+        if self.ctx is None:
+            out["skipped"] = "no _ctx"
+            nxt()
+            return
+
+        def read() -> None:
+            js = "(function(){var e=document.querySelector('[data-rf-fill=\"rf-today\"]');return e?e.innerText:null;})()"
+
+            def got(v: Any) -> None:
+                out["today_text"] = v
+                theme = "dark" if mw.pm.theme() == 2 else "light"
+                self.shoot(theme, "goal")
+                self.ctx.config.set("daily_goal", 0)
+                self.wait_for("deck_browser_did_render", nxt, 10_000)
+
+            mw.web.evalWithCallback(js, got)
+
+        def rendered() -> None:
+            self.later(1500, read)  # panel data arrives from a background query
+
+        if mw.state != "deckBrowser":
+            mw.moveToState("deckBrowser")
+        self.wait_for("deck_browser_did_render", rendered, 10_000)
+        self.ctx.config.set("daily_goal", 10)
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()
