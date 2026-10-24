@@ -2,6 +2,13 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.2.5] - 2026-10-24
+
+### Added
+- **New cards left** under each deck in the list: how many new cards remain, the share already introduced and a thin progress line; with a steady pace, an estimate of when you'll finish (subdecks included).
+- **Leech warning:** a small amber "N leeches" badge on decks with cards tagged *leech*; click it to open the Browser on exactly those cards.
+- **Last 14 days chart** on the deck overview: a "Last 14 days" panel under the counts with stacked correct/Again bars, average reviews per day and percent correct for the deck and its subdecks. Setting: "Recent reviews chart on the deck overview".
+
 ## [0.2.4] - 2026-10-24
 
 ### Added

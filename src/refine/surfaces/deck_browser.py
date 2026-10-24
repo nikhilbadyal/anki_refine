@@ -41,6 +41,9 @@ class DeckBrowserSurface(WebSurface):
         self._selected: int | None = None
         self._avg_ms = 0.0
         self._retention_raw: dict = {}  # deck id -> (passed, total), last query
+        self._progress_raw: dict = {}  # deck id -> (new left, total), last query
+        self._leech_raw: dict = {}  # deck id -> leech cards, last query
+        self._per_day: dict = {}  # deck id -> new cards per day
         self._tree = None
 
     def flags(self, cfg: dict) -> dict[str, bool]:
@@ -105,6 +108,8 @@ class DeckBrowserSurface(WebSurface):
             "selected": self._selected,
             "avgMs": self._avg_ms,
             "retention": self._retention_pct(),
+            "progress": self._progress(),
+            "leeches": self._leeches(),
         }
         # data for refine.js, which switches the headline in place on click
         blob = json.dumps(data).replace("</", "<\\/")
@@ -120,6 +125,22 @@ class DeckBrowserSurface(WebSurface):
             return {}
         agg = home.aggregate_retention(self._tree, self._retention_raw)
         return {str(k): v for k, v in agg.items()}
+
+    def _progress(self) -> dict[str, dict]:
+        if self._tree is None or not self._progress_raw:
+            return {}
+        agg = home.aggregate_sums(self._tree, self._progress_raw)
+        return {
+            str(k): {"left": v[0], "total": v[1], "perDay": self._per_day.get(k, 0)}
+            for k, v in agg.items()
+            if v[0] > 0
+        }
+
+    def _leeches(self) -> dict[str, int]:
+        if self._tree is None or not self._leech_raw:
+            return {}
+        agg = home.aggregate_sums(self._tree, self._leech_raw)
+        return {str(k): v[0] for k, v in agg.items() if v[0] > 0}
 
     @staticmethod
     def _deck_counts(tree: Any) -> dict[int, dict]:
@@ -172,6 +193,12 @@ class DeckBrowserSurface(WebSurface):
             if stats.retention != self._retention_raw:
                 self._retention_raw = stats.retention
                 changed["retention"] = self._retention_pct()
+            if stats.progress != self._progress_raw or stats.per_day != self._per_day:
+                self._progress_raw, self._per_day = stats.progress, stats.per_day
+                changed["progress"] = self._progress()
+            if stats.leeches != self._leech_raw:
+                self._leech_raw = stats.leeches
+                changed["leeches"] = self._leeches()
             self._panels, self._panels_key, self._avg_ms = payload, key, stats.avg_ms
             if changed:  # only touch the page if something differs
                 ctx.mw.web.eval(f"window.rfFillHome && window.rfFillHome({json.dumps(changed)});")
@@ -200,6 +227,17 @@ class DeckBrowserSurface(WebSurface):
             self._select(ctx, int(arg))
         elif verb == "deselect":
             self._selected = None
+        elif verb == "leeches" and arg.isdigit():
+            self._show_leeches(ctx, int(arg))
+
+    def _show_leeches(self, ctx: Any, deck_id: int) -> None:
+        """Open the Browser on this deck's (and subdecks') leech cards."""
+        import aqt
+
+        mw = ctx.mw
+        name = mw.col.decks.name(deck_id)
+        browser = aqt.dialogs.open("Browser", mw)
+        browser.search_for(home.leech_search(name))
 
     def _select(self, ctx: Any, deck_id: int) -> None:
         """Make a deck current and stay on Home. Same operation as Anki's

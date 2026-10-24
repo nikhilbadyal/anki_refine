@@ -7,6 +7,11 @@ html:not(.rf-s-deck_browser) .rf-hero,
 html:not(.rf-s-deck_browser) .rf-row-study,
 html:not(.rf-s-deck_browser) .rf-side,
 html.rf-s-deck_browser:not(.rf-h-hero) .rf-hero,
+html.rf-s-deck_browser:not(.rf-h-progress) .rf-prog,
+html.rf-s-deck_browser:not(.rf-h-progress) #rf-eta,
+html.rf-s-deck_browser:not(.rf-h-leeches) .rf-leech,
+html:not(.rf-s-deck_browser) .rf-prog,
+html:not(.rf-s-deck_browser) .rf-leech,
 html.rf-s-deck_browser:not(.rf-h-today) .rf-today,
 html.rf-s-deck_browser:not(.rf-h-activity) .rf-activity,
 html.rf-s-deck_browser:not(.rf-h-forecast) .rf-forecast { display: none !important; }
@@ -310,6 +315,45 @@ html.refine .rf-hero-action { display: flex; align-items: center; min-height: 46
 html.refine .rf-hero-action:has(> .rf-hero-hint) { min-height: 0; padding-bottom: 1px; }
 html.refine .rf-hero-hint { font-size: var(--rf-text-s); }
 html.refine .rf-hero-scope { color: var(--rf-text); font-weight: 600; }
+
+/* ------------------------------------- new-card progress and leech pill */
+
+html.refine #rf-eta:empty { display: none; }
+html.refine.rf-s-deck_browser .rf-prog {
+  display: block;
+  max-width: 220px;
+  margin-top: 2px;
+  line-height: 1.3;
+  font-weight: 400;
+  white-space: nowrap;
+}
+html.refine.rf-s-deck_browser .rf-prog-text { display: block; font-size: 11.5px; color: var(--rf-text-muted); font-variant-numeric: tabular-nums; }
+html.refine.rf-s-deck_browser .rf-prog-bar {
+  display: block;
+  height: 2px;
+  margin-top: 3px;
+  border-radius: 1px;
+  background: var(--rf-surface-active);
+  overflow: hidden;
+}
+html.refine.rf-s-deck_browser .rf-prog-bar > i { display: block; height: 100%; background: var(--rf-accent); }
+html.refine.rf-s-deck_browser button.rf-leech {
+  margin-inline-start: 8px;
+  padding: 1px 7px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--rf-hard-soft);
+  /* amber pulled toward the text colour: AA (≥ 4.5:1) on the tinted pill in
+     both themes (plain --rf-hard is 4.4:1 in light) */
+  color: color-mix(in srgb, var(--rf-hard) 70%, var(--rf-text));
+  font: 500 11.5px/1.4 var(--rf-font-ui, inherit);
+  height: auto;
+  min-height: 0;
+  vertical-align: middle;
+  cursor: pointer;
+}
+html.refine.rf-s-deck_browser button.rf-leech:hover { filter: brightness(1.08); }
+html.refine.rf-s-deck_browser button.rf-leech:focus-visible { outline: 2px solid var(--rf-hard); outline-offset: 1px; }
 
 /* ------------------------------------------------------ retention column */
 

@@ -50,6 +50,12 @@ class HomeStats:
     retention: dict[int, tuple[int, int]] = field(default_factory=dict)
     today_passed: int = 0  # today's review answers that weren't "Again"
     today_reviews: int = 0
+    # deck id -> (new cards not yet introduced, all cards), deck itself only
+    progress: dict[int, tuple[int, int]] = field(default_factory=dict)
+    # deck id -> cards whose note carries the "leech" tag, deck itself only
+    leeches: dict[int, int] = field(default_factory=dict)
+    # deck id -> options preset's new cards per day
+    per_day: dict[int, int] = field(default_factory=dict)
 
 
 # --------------------------------------------------------------- queries
@@ -149,6 +155,93 @@ def aggregate_retention(tree: Any, raw: dict[int, tuple[int, int]]) -> dict[int,
     return out
 
 
+def progress_by_deck(col: Any) -> dict[int, tuple[int, int]]:
+    """(new cards left, total cards) per deck. "New left" counts cards of
+    type 0 (never introduced), not queue 0: a suspended or buried new card
+    (queue -1/-2/-3) is still not introduced yet, so it must not look
+    learned. Filtered-deck cards count toward their home deck (odid)."""
+    out: dict[int, tuple[int, int]] = {}
+    for did, odid, total, new in col.db.all(
+        "select did, odid, count(), coalesce(sum(type = 0), 0) from cards group by did, odid"
+    ):
+        home = int(odid or did)
+        n, t = out.get(home, (0, 0))
+        out[home] = (n + int(new or 0), t + int(total or 0))
+    return out
+
+
+def leeches_by_deck(col: Any) -> dict[int, int]:
+    """Cards whose note is tagged "leech" per deck. Anki stores tags as
+    " a b c " (space-padded) and LIKE is case-insensitive for ASCII, which is
+    how Anki matches tags too. Hierarchical children (leech::x) are not
+    counted."""
+    out: dict[int, int] = {}
+    for did, odid, n in col.db.all(
+        "select c.did, c.odid, count() from cards c join notes n on n.id = c.nid "
+        "where n.tags like '% leech %' group by c.did, c.odid"
+    ):
+        home = int(odid or did)
+        out[home] = out.get(home, 0) + int(n or 0)
+    return out
+
+
+def per_day_by_deck(col: Any, deck_ids: Any) -> dict[int, int]:
+    """New cards per day of each deck's options preset (filtered decks have
+    no such setting and are skipped)."""
+    out: dict[int, int] = {}
+    for did in deck_ids:
+        try:
+            out[int(did)] = int(col.decks.config_dict_for_deck_id(int(did))["new"]["perDay"])
+        except Exception:
+            continue
+    return out
+
+
+def aggregate_sums(tree: Any, raw: dict[int, Any]) -> dict[int, tuple[int, ...]]:
+    """Per deck, the element-wise sum of its own raw tuple (or int) and all
+    its subdecks', like Anki's own list. Missing decks count as zeros."""
+    out: dict[int, tuple[int, ...]] = {}
+
+    def vec(v: Any) -> tuple[int, ...]:
+        return tuple(v) if isinstance(v, (tuple, list)) else (int(v),)
+
+    def walk(node: Any, width: int) -> tuple[int, ...]:
+        own = vec(raw.get(int(node.deck_id), (0,) * width))
+        for c in node.children:
+            own = tuple(a + b for a, b in zip(own, walk(c, width)))
+        if int(node.deck_id):
+            out[int(node.deck_id)] = own
+        return own
+
+    sample = next(iter(raw.values()), 0)
+    walk(tree, len(vec(sample)))
+    return out
+
+
+def leech_search(deck_name: str) -> str:
+    """Browser search for a deck's leeches. Escapes \\ " * _ (wildcards) as
+    Anki's search syntax requires; "deck:name" also matches subdecks."""
+    quoted = deck_name.replace("\\", "\\\\").replace('"', '\\"').replace("*", "\\*").replace("_", "\\_")
+    return f'"deck:{quoted}" tag:leech'
+
+
+def eta_text(left: int, per_day: int) -> str:
+    """"≈ 3 weeks to finish new cards at 20/day"; days under 14 days, weeks
+    up to 16 weeks, months beyond. Empty when there is nothing to estimate."""
+    if left <= 0 or per_day <= 0:
+        return ""
+    days = math.ceil(left / per_day)
+    if days < 14:
+        span = f"{days} day{'s' if days != 1 else ''}"
+    elif days <= 16 * 7:
+        w = round(days / 7)
+        span = f"{w} weeks"
+    else:
+        m = round(days / 30)
+        span = f"{m} months"
+    return f"≈ {span} to finish new cards at {fmt_int(per_day)}/day"
+
+
 def collect(col: Any) -> HomeStats:
     s = HomeStats()
     cutoff = col.sched.day_cutoff
@@ -163,6 +256,9 @@ def collect(col: Any) -> HomeStats:
     )
     s.today_passed, s.today_reviews = int(passed_total[0]), int(passed_total[1])
     s.retention = retention_by_deck(col)
+    s.progress = progress_by_deck(col)
+    s.leeches = leeches_by_deck(col)
+    s.per_day = per_day_by_deck(col, s.progress)
     long = daily_counts(col, STREAK_DAYS)
     s.activity = long[-ACTIVITY_DAYS:]
     s.streak, s.best_streak = streaks(long)
@@ -216,6 +312,7 @@ def hero_html(
         f'<span class="rf-stat"><b class="rf-c-learn" data-rf="learn">{fmt_int(t.learn)}</b> learning</span>'
         f'<span class="rf-stat"><b class="rf-c-review" data-rf="review">{fmt_int(t.review)}</b> due</span>'
         '<span class="rf-stat rf-faint" id="rf-pace"></span>'
+        '<span class="rf-stat rf-faint" id="rf-eta"></span>'
     )
     return (
         '<section class="rf-hero rf-panel" aria-label="Cards waiting" aria-live="polite">'

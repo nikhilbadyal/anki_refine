@@ -46,6 +46,8 @@ _HOME = (
     ("today", "Today panel"),
     ("activity", "Activity heatmap"),
     ("forecast", "Next 7 days forecast"),
+    ("progress", "New cards progress"),
+    ("leeches", "Leech warnings"),
 )
 _DENSITY_LABELS ={"comfortable": "Comfortable", "compact": "Compact"}
 
@@ -281,6 +283,10 @@ class _SettingsDialog(QDialog):
             click_row.addWidget(rb)
         click_row.addStretch(1)
         root.addLayout(click_row)
+        self._ov_chart = QCheckBox("Recent reviews chart on the deck overview")
+        self._ov_chart.setToolTip("A small 14-day bar chart for the deck, below the counts on its overview screen.")
+        self._ov_chart.toggled.connect(self._safe(lambda v: self._set("overview_chart", bool(v))))
+        root.addWidget(self._ov_chart)
         root.addWidget(self._rule())
 
         # Reviewer
@@ -348,7 +354,7 @@ class _SettingsDialog(QDialog):
             + [self._enabled]
             + [self._surface[s] for s in SURFACE_IDS]
             + [self._home[h] for h, _l in _HOME]
-            + [self._goal, self._click["select"], self._click["overview"]]
+            + [self._goal, self._click["select"], self._click["overview"], self._ov_chart]
             + [self._ease, self._two, self._ja, self._furi, self._reset_btn, self._log_btn, self._close_btn]
         )
         for a, b in zip(chain, chain[1:]):
@@ -400,6 +406,8 @@ class _SettingsDialog(QDialog):
                 rb.setChecked(cfg.get("deck_click", "select") == value)
                 rb.setEnabled(enabled)
             self._goal.setEnabled(enabled and bool(home.get("today", True)))
+            self._ov_chart.setChecked(bool(cfg.get("overview_chart", True)))
+            self._ov_chart.setEnabled(enabled)
             cards = cfg.get("cards") or {}
             self._ja.setChecked(bool(cards.get("japanese", False)))
             self._furi.setChecked(bool(cards.get("furigana_hover", False)))

@@ -49,6 +49,14 @@
         }
         return;
       }
+      if (key === "progress" || key === "leeches") {
+        if (deckData) {
+          deckData[key] = p[key];
+          renderDeckExtras();
+          renderHero();
+        }
+        return;
+      }
       var el = document.querySelector('[data-rf-fill="' + key + '"]');
       if (el) el.innerHTML = p[key];
     });
@@ -77,6 +85,16 @@
     return m ? h + " h " + m + " min" : h + " h";
   }
 
+  // mirrors home.eta_text: days under 14 days, weeks up to 16 weeks, then months
+  function etaText(p) {
+    if (!p || !(p.left > 0) || !(p.perDay > 0)) return "";
+    var days = Math.ceil(p.left / p.perDay), span;
+    if (days < 14) span = days + " day" + (days !== 1 ? "s" : "");
+    else if (days <= 112) span = Math.round(days / 7) + " weeks";
+    else span = Math.round(days / 30) + " months";
+    return "≈ " + span + " to finish new cards at " + fmtInt(p.perDay) + "/day";
+  }
+
   function hint(text) {
     var span = document.createElement("span");
     span.className = "rf-hero-hint rf-muted";
@@ -101,6 +119,8 @@
     });
     var pace = document.getElementById("rf-pace");
     if (pace) pace.textContent = due && deckData.avgMs > 0 ? "≈ " + fmtDuration(due * deckData.avgMs) + " at your pace" : "";
+    var eta = document.getElementById("rf-eta");
+    if (eta) eta.textContent = d ? etaText(deckData.progress && deckData.progress[String(id)]) : "";
     var action = hero.querySelector(".rf-hero-action");
     if (!action) return;
     action.textContent = "";
@@ -195,6 +215,61 @@
       cell.title = pct + "% of reviews remembered (last 30 days)";
       cell.appendChild(bar);
       cell.appendChild(val);
+    }
+  }
+
+  // Per-deck extras under/after the name: "N new left · P% introduced" with a
+  // thin bar, and a leech pill that opens the Browser on those cards.
+  function renderDeckExtras() {
+    if (!deckData) return;
+    var prog = deckData.progress || {}, leeches = deckData.leeches || {};
+    var rows = document.querySelectorAll("tr.deck");
+    for (var i = 0; i < rows.length; i++) {
+      var tr = rows[i];
+      if (!/^\d+$/.test(tr.id)) continue;
+      var td = tr.querySelector("td.decktd");
+      var link = tr.querySelector("a.deck");
+      if (!td || !link) continue;
+      var old = td.querySelectorAll(".rf-prog, .rf-leech");
+      for (var o = 0; o < old.length; o++) old[o].remove();
+      var name = link.textContent.trim();
+      var n = leeches[tr.id];
+      if (n > 0) {
+        var lb = document.createElement("button");
+        lb.type = "button";
+        lb.className = "rf-leech";
+        lb.textContent = n + " leech" + (n !== 1 ? "es" : "");
+        lb.title = "Show leech cards in the Browser";
+        lb.setAttribute("aria-label", "Show " + n + " leech card" + (n !== 1 ? "s" : "") + " in " + name);
+        lb.addEventListener("click", (function (id) {
+          return function (ev) {
+            ev.stopPropagation();
+            ev.preventDefault();
+            pycmd("refine:deck_browser:leeches:" + id);
+          };
+        })(tr.id));
+        link.insertAdjacentElement("afterend", lb);
+      }
+      var p = prog[tr.id];
+      if (p && p.left > 0 && p.total > 0) {
+        var pct = Math.round(100 * (p.total - p.left) / p.total);
+        var box = document.createElement("div");
+        box.className = "rf-prog";
+        var pad = parseFloat(getComputedStyle(td).paddingLeft) || 0;
+        box.style.marginInlineStart = Math.max(0, link.offsetLeft - pad) + "px";
+        var txt = document.createElement("span");
+        txt.className = "rf-prog-text";
+        txt.textContent = fmtInt(p.left) + " new left · " + pct + "% introduced";
+        var track = document.createElement("span");
+        track.className = "rf-prog-bar";
+        track.setAttribute("aria-hidden", "true");
+        var fill = document.createElement("i");
+        fill.style.width = pct + "%";
+        track.appendChild(fill);
+        box.appendChild(txt);
+        box.appendChild(track);
+        td.appendChild(box);
+      }
     }
   }
 
@@ -314,6 +389,8 @@
     var spacer = document.querySelector("tr.top-level-drag-row td");
     if (spacer) spacer.colSpan = 7;
     renderRetention();
+    renderDeckExtras();
+    renderHero();
     markSelected();
     // a click anywhere that isn't a deck row or a control clears the selection
     document.addEventListener("click", function (ev) {

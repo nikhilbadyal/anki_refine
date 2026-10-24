@@ -13,7 +13,7 @@ ACCENT_IDS = tuple(ACCENTS.keys())
 DENSITIES = ("comfortable", "compact")
 SURFACE_IDS = ("toolbar", "deck_browser", "overview", "reviewer", "qt_chrome", "pages", "sidebar")
 
-HOME_IDS = ("hero", "today", "activity", "forecast")
+HOME_IDS = ("hero", "today", "activity", "forecast", "progress", "leeches")
 # opt-in card-content layer; off by default because it touches card rendering
 CARD_IDS = ("japanese", "furigana_hover")
 MAX_DAILY_GOAL = 5000
@@ -35,6 +35,7 @@ DEFAULTS: Dict[str, Any] = {
     "daily_goal": 0,
     "deck_click": "select",
     "motion": "smooth",
+    "overview_chart": True,
 }
 
 _log = logging.getLogger("refine")
@@ -69,6 +70,8 @@ def normalize(raw: Optional[Mapping]) -> Dict[str, Any]:
                     out["home"][h] = home[h]
         if raw.get("motion") in MOTION:
             out["motion"] = raw["motion"]
+        if isinstance(raw.get("overview_chart"), bool):
+            out["overview_chart"] = raw["overview_chart"]
         if raw.get("deck_click") in DECK_CLICK:
             out["deck_click"] = raw["deck_click"]
         goal = raw.get("daily_goal")

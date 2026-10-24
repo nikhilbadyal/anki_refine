@@ -210,6 +210,8 @@ class Queries(unittest.TestCase):
             all_rows={
                 "join cards": [(1, 0, 40, 36), (2, 1, 10, 9)],  # retention: did, odid, total, passed
                 "from revlog": [(n - 1, 3), (n - 2, 1), (n - 3, 1)],
+                "sum(type = 0)": [(1, 0, 100, 40)],  # progress: did, odid, total, new
+                "tags like": [(1, 0, 2)],  # leeches: did, odid, n
                 "from cards": [(100, 2)],
             },
             scalar={"avg(time)": 4500.0, "from cards": 1},
@@ -230,6 +232,9 @@ class Queries(unittest.TestCase):
             self.assertIn("type not in (4, 5)", sql)
         # filtered-deck review (odid 1) counts toward its home deck 1
         self.assertEqual(s.retention, {1: (45, 50)})
+        self.assertEqual(s.progress, {1: (40, 100)})
+        self.assertEqual(s.leeches, {1: 2})
+        self.assertEqual(s.per_day, {})  # fake collection has no deck configs
         self.assertEqual(db.calls[0][2], ((self.CUT - DAY) * 1000,))
 
 
@@ -273,6 +278,69 @@ class Retention(unittest.TestCase):
         self.assertEqual(out[11], 90)
         self.assertIsNone(out[20])  # 5 reviews < minimum
         self.assertNotIn(0, out)
+
+
+class Progress(unittest.TestCase):
+    def test_progress_by_deck_maps_filtered_to_home(self):
+        db = FakeDB(all_rows=[(1, 0, 100, 40), (9, 1, 5, 5), (2, 0, 10, 0)])
+        out = home.progress_by_deck(fake_col(db))
+        self.assertEqual(out, {1: (45, 105), 2: (0, 10)})
+        self.assertIn("type = 0", db.calls[0][1])
+
+    def test_progress_handles_null_sum(self):
+        out = home.progress_by_deck(fake_col(FakeDB(all_rows=[(1, 0, 3, None)])))
+        self.assertEqual(out, {1: (0, 3)})
+
+    def test_aggregate_sums_includes_subdecks(self):
+        child = node(deck_id=11)
+        parent = node(deck_id=10, children=[child])
+        other = node(deck_id=20)
+        root = node(deck_id=0, children=[parent, other])
+        out = home.aggregate_sums(root, {10: (5, 20), 11: (7, 30)})
+        self.assertEqual(out[10], (12, 50))
+        self.assertEqual(out[11], (7, 30))
+        self.assertEqual(out[20], (0, 0))
+        self.assertNotIn(0, out)
+
+    def test_aggregate_sums_scalar(self):
+        child = node(deck_id=11)
+        root = node(deck_id=0, children=[node(deck_id=10, children=[child])])
+        out = home.aggregate_sums(root, {10: 1, 11: 2})
+        self.assertEqual(out[10], (3,))
+
+    def test_eta_text(self):
+        self.assertEqual(home.eta_text(0, 20), "")
+        self.assertEqual(home.eta_text(100, 0), "")
+        self.assertEqual(home.eta_text(20, 20), "≈ 1 day to finish new cards at 20/day")
+        self.assertEqual(home.eta_text(260, 20), "≈ 13 days to finish new cards at 20/day")
+        self.assertEqual(home.eta_text(280, 20), "≈ 2 weeks to finish new cards at 20/day")
+        self.assertEqual(home.eta_text(640, 20), "≈ 5 weeks to finish new cards at 20/day")
+        self.assertEqual(home.eta_text(2240, 20), "≈ 16 weeks to finish new cards at 20/day")
+        self.assertEqual(home.eta_text(2260, 20), "≈ 4 months to finish new cards at 20/day")
+        self.assertEqual(home.eta_text(10000, 10), "≈ 33 months to finish new cards at 10/day")
+
+    def test_per_day_skips_failures(self):
+        class Decks:
+            def config_dict_for_deck_id(self, did):
+                if did == 2:
+                    raise KeyError("filtered")
+                return {"new": {"perDay": 15}}
+
+        out = home.per_day_by_deck(NS(decks=Decks()), [1, 2])
+        self.assertEqual(out, {1: 15})
+
+
+class Leeches(unittest.TestCase):
+    def test_leeches_by_deck(self):
+        db = FakeDB(all_rows=[(1, 0, 3), (9, 1, 2), (2, 0, None)])
+        out = home.leeches_by_deck(fake_col(db))
+        self.assertEqual(out, {1: 5, 2: 0})
+        sql = db.calls[0][1]
+        self.assertIn("'% leech %'", sql)
+
+    def test_leech_search_quotes(self):
+        self.assertEqual(home.leech_search("Japanese::Kanji"), '"deck:Japanese::Kanji" tag:leech')
+        self.assertEqual(home.leech_search('A "b"'), '"deck:A \\"b\\"" tag:leech')
 
 
 class SessionSummary(unittest.TestCase):
