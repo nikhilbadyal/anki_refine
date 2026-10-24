@@ -22,6 +22,7 @@ from .surfaces.overview import OverviewSurface
 from .surfaces.pages import PagesSurface
 from .surfaces.qt_chrome import QtChromeSurface
 from .surfaces.reviewer import ReviewerSurface
+from .surfaces.sidebar import SidebarSurface
 from .surfaces.toolbar import ToolbarSurface
 from .theme import css as theme_css
 
@@ -41,6 +42,7 @@ class Registry:
             QtChromeSurface(),
             CardsSurface(),
             PagesSurface(),
+            SidebarSurface(),
         ]
         self.started = False
         self.skipped: dict[str, str] = {}

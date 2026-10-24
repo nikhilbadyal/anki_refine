@@ -11,7 +11,7 @@ from .theme.palettes import ACCENTS
 SCHEMA_VERSION = 1
 ACCENT_IDS = tuple(ACCENTS.keys())
 DENSITIES = ("comfortable", "compact")
-SURFACE_IDS = ("toolbar", "deck_browser", "overview", "reviewer", "qt_chrome", "pages")
+SURFACE_IDS = ("toolbar", "deck_browser", "overview", "reviewer", "qt_chrome", "pages", "sidebar")
 
 HOME_IDS = ("hero", "today", "activity", "forecast")
 # opt-in card-content layer; off by default because it touches card rendering

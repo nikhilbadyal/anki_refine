@@ -1,0 +1,194 @@
+/* App shell from the design: left sidebar + header on Home, Overview and
+   Stats. Shown only under html.rf-s-sidebar, so turning the setting off
+   live hides it (and brings the stock toolbar back). */
+
+html:not(.rf-s-sidebar) .rf-shell,
+html:not(.rf-s-sidebar) .rf-header { display: none !important; }
+
+/* The stock top toolbar is hidden on shell screens; it returns while
+   reviewing. Its webview re-measures its height on each state change. */
+html.refine.rf-s-sidebar.rf-page-TopToolbar[data-rf-state="deckBrowser"] body,
+html.refine.rf-s-sidebar.rf-page-TopToolbar[data-rf-state="overview"] body,
+html.refine.rf-s-sidebar.rf-page-TopToolbar[data-rf-state="refineStats"] body { display: none; }
+
+:root { --rf-shell-w: 224px; }
+
+html.refine.rf-s-sidebar body:has(> .rf-shell) {
+  padding: 0 32px 40px calc(var(--rf-shell-w) + 32px) !important;
+  margin: 0 !important;
+}
+
+/* ------------------------------------------------------------- sidebar */
+
+html.refine .rf-shell {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--rf-shell-w);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 18px 14px;
+  overflow-y: auto;
+  z-index: 10;
+  background: var(--rf-surface-sunken);
+  border-right: 1px solid var(--rf-border);
+  font-family: var(--rf-font-ui);
+  text-align: start;
+}
+
+html.refine .rf-brand { display: flex; align-items: center; gap: 10px; padding: 2px 6px; }
+html.refine .rf-brand-mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: var(--rf-primary-bg);
+  color: var(--rf-primary-fg);
+  font: 500 15px var(--rf-font-display);
+}
+html.refine .rf-brand-text { display: flex; flex-direction: column; min-width: 0; }
+html.refine .rf-brand-name { font-weight: 600; font-size: 14.5px; color: var(--rf-text); }
+html.refine .rf-brand-profile { font-size: 11.5px; color: var(--rf-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.refine .rf-brand-initial { display: none; }
+
+html.refine .rf-nav,
+html.refine .rf-nav-group { display: flex; flex-direction: column; gap: 2px; }
+html.refine .rf-nav-heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rf-text-faint);
+  padding: 0 10px 6px;
+}
+
+html.refine .rf-shell button.rf-nav-item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 10px;
+  border-radius: var(--rf-radius-s);
+  font: 500 14px var(--rf-font-ui);
+  color: var(--rf-text-muted);
+  cursor: pointer;
+}
+html.refine .rf-shell button.rf-nav-item:hover { background: var(--rf-surface-hover); color: var(--rf-text); }
+html.refine .rf-shell button.rf-nav-item:focus-visible { outline: 2px solid var(--rf-focus); outline-offset: 1px; }
+html.refine .rf-shell button.rf-nav-item[aria-current="page"] {
+  background: var(--rf-surface-active);
+  color: var(--rf-text);
+  font-weight: 600;
+}
+html.refine .rf-shell button.rf-nav-item[aria-current="page"] .rf-ico { color: var(--rf-accent); }
+html.refine .rf-nav-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.refine .rf-ico { flex: none; width: 16px; height: 16px; }
+html.refine .rf-key {
+  font: 500 11px var(--rf-font-mono);
+  color: var(--rf-text-faint);
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+html.refine .rf-shell-foot { margin-top: auto; }
+html.refine .rf-shell button.rf-sync { border: 1px solid var(--rf-border-strong); font-size: 13px; }
+html.refine .rf-sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rf-accent); flex: none; }
+
+/* -------------------------------------------------------------- header */
+
+html.refine .rf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 60px;
+  margin: 0 -32px 28px;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--rf-border);
+  font-family: var(--rf-font-ui);
+  text-align: start;
+}
+html.refine .rf-header-title { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+html.refine .rf-header h1 {
+  margin: 0;
+  font: 600 18px var(--rf-font-ui);
+  letter-spacing: -0.015em;
+  color: var(--rf-text);
+  white-space: nowrap;
+}
+html.refine .rf-header-sub { font-size: 13px; color: var(--rf-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.refine .rf-header-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+html.refine .rf-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  width: 240px;
+  max-width: 32vw;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: var(--rf-surface);
+  border: 1px solid var(--rf-border);
+  color: var(--rf-text-faint);
+}
+html.refine .rf-search:focus-within { border-color: var(--rf-focus); }
+html.refine .rf-search input {
+  all: unset;
+  flex: 1;
+  min-width: 0;
+  font: 13px var(--rf-font-ui);
+  color: var(--rf-text);
+}
+html.refine .rf-search input::placeholder { color: var(--rf-text-faint); }
+html.refine .rf-header .rf-btn-primary { height: 34px; padding: 0 14px; font-size: 13px; }
+html.refine .rf-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* The overview's own deck title would repeat the header. */
+html.refine.rf-s-sidebar.rf-page-Overview center > h3 { display: none; }
+html.refine.rf-s-sidebar.rf-page-Overview center > table { margin-top: 12px; }
+
+/* -------------------------------------------------- narrow: icon rail */
+
+@media (max-width: 960px) {
+  :root { --rf-shell-w: 60px; }
+  html.refine .rf-shell { padding: 14px 8px; align-items: center; }
+  html.refine .rf-brand-text,
+  html.refine .rf-nav-label,
+  html.refine .rf-key,
+  html.refine .rf-nav-heading,
+  html.refine .rf-sync-dot { display: none; }
+  html.refine .rf-brand { padding: 0; }
+  html.refine .rf-shell button.rf-nav-item { justify-content: center; padding: 9px; }
+  html.refine.rf-s-sidebar body:has(> .rf-shell) { padding: 0 16px 32px calc(var(--rf-shell-w) + 16px) !important; }
+  html.refine .rf-header { margin: 0 -16px 20px; padding: 0 16px; }
+  html.refine .rf-search { width: 180px; }
+  html.refine .rf-search .rf-key { display: none; }
+}
+
+/* Bottom bar while Stats is shown (Save PDF). */
+html.refine.rf-page-RefineStatsBottomBar #outer { border-top: 1px solid var(--rf-border); }
+html.refine.rf-page-RefineStatsBottomBar #header { padding: 9px; }
+html.refine.rf-page-RefineStatsBottomBar #header button { margin: 0 4px; color: var(--rf-text-muted); }
+html.refine.rf-page-RefineStatsBottomBar #header button:hover { color: var(--rf-text); }
+
+/* In-window Stats: Anki's page sizes its wrapper, range bar and chart grid
+   from the viewport, which ignores the sidebar's space. Let them take the
+   width that is actually available (named classes only; the hashed svelte
+   ones change between releases). */
+html.refine.rf-s-sidebar.rf-page-stats body > div,
+html.refine.rf-s-sidebar.rf-page-stats body > div > div,
+html.refine.rf-s-sidebar.rf-page-stats .range-box,
+html.refine.rf-s-sidebar.rf-page-stats .graphs-container {
+  width: auto !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+html.refine.rf-s-sidebar.rf-page-stats .graphs-container { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)) !important; }

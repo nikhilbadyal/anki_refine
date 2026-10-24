@@ -19,7 +19,15 @@ from ..theme import css as theme_css
 from .base import Surface
 
 
-def inject_page(ctx: Any, web: Any, surface_id: str, page: str, css_files: tuple[str, ...]) -> None:
+def inject_page(
+    ctx: Any,
+    web: Any,
+    surface_id: str,
+    page: str,
+    css_files: tuple[str, ...],
+    extra_classes: tuple[str, ...] = (),
+    prepend_html: str = "",
+) -> None:
     """Add Refine's classes, tokens, fonts and css to an already-loaded page.
 
     SvelteKit pages reset <html>'s class list after load, so a
@@ -28,7 +36,8 @@ def inject_page(ctx: Any, web: Any, surface_id: str, page: str, css_files: tuple
     cfg = ctx.config.get()
     base = ctx.web_base
     payload = {
-        "classes": ["refine", f"rf-s-{surface_id}", f"rf-page-{page}"],
+        "classes": ["refine", f"rf-s-{surface_id}", f"rf-page-{page}", *extra_classes],
+        "html": prepend_html,
         "links": [f"{base}/css/fonts.css"] + [f"{base}/css/{f}" for f in css_files],
         "script": f"{base}/js/refine.js",
         "tokens": theme_css.root_css(cfg["accent"], cfg["density"]),
@@ -45,6 +54,7 @@ def inject_page(ctx: Any, web: Any, surface_id: str, page: str, css_files: tuple
         "var s=document.createElement('style');s.id=p.styleId;s.textContent=p.tokens;"
         "document.head.appendChild(s);"
         "var j=document.createElement('script');j.src=p.script;document.head.appendChild(j);"
+        "if(p.html&&!document.querySelector('.rf-shell')){document.body.insertAdjacentHTML('afterbegin',p.html);}"
         f"}})({json.dumps(payload)});"
     )
 
@@ -72,6 +82,8 @@ class PagesSurface(Surface):
         gui_hooks.webview_did_inject_style_into_page.remove(self._hook)
 
     def _on_page(self, ctx: Any, web: Any) -> None:
+        if getattr(web, "_refine_shell", False):
+            return  # Refine's in-window Stats; the sidebar surface styles it
         page = self.KINDS.get(_kind_name(web))
         if page is None:
             return

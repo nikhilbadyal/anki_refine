@@ -17,7 +17,7 @@
       window.rfKeep = window.rfKeep.filter(function (k) {
         return !(k in p.flags) || p.flags[k];
       }).concat(Object.keys(p.flags).filter(function (k) {
-        return p.flags[k] && window.rfKeep.indexOf(k) < 0 && /^(refine|rf-s-overview)$/.test(k);
+        return p.flags[k] && window.rfKeep.indexOf(k) < 0 && /^(refine|rf-s-[\w-]+)$/.test(k);
       }));
     }
     if (p.tokens && p.styleId && !cardsOnly) {
@@ -94,6 +94,17 @@
       }
     }
   }
+
+  // Ctrl+K focuses the header search (shell pages only; Anki doesn't use it here)
+  document.addEventListener("keydown", function (ev) {
+    if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && (ev.key === "k" || ev.key === "K")) {
+      var input = document.querySelector(".rf-search input");
+      if (input) {
+        ev.preventDefault();
+        input.focus();
+      }
+    }
+  });
 
   function onReady() {
     if (document.documentElement.classList.contains("rf-page-DeckBrowser")) enhanceDeckRows();

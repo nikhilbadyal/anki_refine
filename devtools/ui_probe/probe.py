@@ -152,6 +152,7 @@ class Probe:
                 (f"{theme}:browser", lambda n, t=theme: self.step_browser(t, n)),
                 (f"{theme}:narrow", lambda n, t=theme: self.step_narrow(t, n)),
             ]
+        steps.append(("stats_inline", self.step_stats_inline))
         steps.append(("diagnostics", self.step_diagnostics))
         steps.append(("goal", self.step_goal))
         steps.append(("cards", self.step_cards))
@@ -540,6 +541,72 @@ class Probe:
 
         mod._open_diagnostics(self.ctx)
         self.later(800, grab)
+
+    # Sidebar shell: Stats inside the main window, from the sidebar and from
+    # the "T" shortcut, with no separate window.
+    def step_stats_inline(self, nxt: Next) -> None:
+        mw = _mw()
+        out: dict[str, Any] = {}
+        self.r["stats_inline"] = out
+        before = {id(w) for w in QApplication.topLevelWidgets() if w.isVisible()}
+
+        def windows() -> list[str]:
+            out_w = []
+            for w in QApplication.topLevelWidgets():
+                if w.isVisible() and id(w) not in before and w is not mw:
+                    text = w.text() if hasattr(w, "text") else ""
+                    out_w.append(f"{type(w).__name__}: {text}"[:300])
+            return out_w
+
+        def via_sidebar() -> None:
+            mw.web.eval("pycmd('refine:sidebar:go:stats')")
+            self.later(4000, after_sidebar)
+
+        def after_sidebar() -> None:
+            from aqt.webview import AnkiWebView
+
+            views = [w for w in mw.findChildren(AnkiWebView) if w.isVisible() and getattr(w, "_refine_shell", False)]
+            out["sidebar"] = {"state": mw.state, "new_windows": windows(),
+                              "stats_view_visible": bool(views),
+                              "stats_url": views[0].url().toString() if views else None,
+                              "main_web_visible": mw.web.isVisible(),
+                              "toolbar_height": mw.toolbarWeb.height(), "bottom_visible": mw.bottomWeb.isVisible()}
+            theme = "dark" if mw.pm.theme() == 2 else "light"
+            self.shoot(theme, "stats_inline")
+            # layout check: anything wider than the viewport (cut-off charts)
+            js = ("(function(){var vw=document.documentElement.clientWidth,o=[];"
+                  "document.querySelectorAll('body *').forEach(function(e){var r=e.getBoundingClientRect();"
+                  "if(r.right>vw+1&&o.length<8){var cs=getComputedStyle(e);o.push([e.tagName,e.className.toString().slice(0,60),"
+                  "Math.round(r.left),Math.round(r.right),cs.width,cs.maxWidth,cs.display,cs.gridTemplateColumns].join(' | '))}});"
+                  "return JSON.stringify({vw:vw,scrollW:document.documentElement.scrollWidth,overflow:o});})()")
+
+            def got(v: Any) -> None:
+                out["layout"] = json.loads(v) if isinstance(v, str) else v
+                self.wait_for("deck_browser_did_render", via_key, 10_000)
+                mw.moveToState("deckBrowser")
+
+            views[0].evalWithCallback(js, got) if views else got(None)
+
+        def via_key() -> None:
+            from aqt.qt import QShortcut
+
+            hits = [sc for sc in mw.findChildren(QShortcut) if sc.key().toString() == "T"]
+            out["t_shortcuts"] = len(hits)
+            for sc in hits[:1]:
+                sc.activated.emit()
+            self.later(4000, after_key)
+
+        def after_key() -> None:
+            out["key"] = {"state": mw.state, "new_windows": windows()}
+            self.wait_for("deck_browser_did_render", nxt, 10_000)
+            mw.moveToState("deckBrowser")
+            out["back_bottom_visible"] = mw.bottomWeb.isVisible()
+
+        if mw.state != "deckBrowser":
+            self.wait_for("deck_browser_did_render", via_sidebar, 10_000)
+            mw.moveToState("deckBrowser")
+        else:
+            via_sidebar()
 
     def step_back(self, nxt: Next) -> None:
         mw = _mw()

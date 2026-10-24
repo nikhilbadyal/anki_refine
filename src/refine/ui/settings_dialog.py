@@ -39,6 +39,7 @@ _SURFACES = {
     ),
     "qt_chrome": ("Menus and scrollbars", "Application menus, tooltips and scrollbars"),
     "pages": ("Statistics and deck options", "Colours and fonts only; these screens keep Anki's layout"),
+    "sidebar": ("Sidebar navigation", "Left sidebar on Home, Overview and Stats; Stats opens in the main window"),
 }
 _HOME = (
     ("hero", "Cards-waiting headline"),
