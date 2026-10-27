@@ -50,7 +50,7 @@ html.refine .rf-brand-mark {
   font: 500 15px var(--rf-font-display);
 }
 html.refine .rf-brand-text { display: flex; flex-direction: column; min-width: 0; }
-html.refine .rf-brand-name { font-weight: 600; font-size: 14.5px; color: var(--rf-text); }
+html.refine .rf-brand-name { font-weight: 600; font-size: 14.5px; color: var(--rf-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html.refine .rf-brand-profile { font-size: 11.5px; color: var(--rf-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html.refine .rf-brand-initial { display: none; }
 

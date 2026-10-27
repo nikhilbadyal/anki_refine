@@ -290,6 +290,8 @@ class Progress(unittest.TestCase):
         out = home.progress_by_deck(fake_col(db))
         self.assertEqual(out, {1: (45, 105), 2: (0, 10)})
         self.assertIn("type = 0", db.calls[0][1])
+        # suspended new cards can't be studied, so they are not "left"
+        self.assertIn("not (type = 0 and queue = -1)", db.calls[0][1])
 
     def test_progress_handles_null_sum(self):
         out = home.progress_by_deck(fake_col(FakeDB(all_rows=[(1, 0, 3, None)])))

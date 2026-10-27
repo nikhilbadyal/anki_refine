@@ -157,12 +157,16 @@ def aggregate_retention(tree: Any, raw: dict[int, tuple[int, int]]) -> dict[int,
 
 def progress_by_deck(col: Any) -> dict[int, tuple[int, int]]:
     """(new cards left, total cards) per deck. "New left" counts cards of
-    type 0 (never introduced), not queue 0: a suspended or buried new card
-    (queue -1/-2/-3) is still not introduced yet, so it must not look
-    learned. Filtered-deck cards count toward their home deck (odid)."""
+    type 0 (never introduced), not queue 0: a buried new card (queue -2/-3)
+    comes back tomorrow, so it is still left. A suspended new card
+    (queue -1, e.g. a leech that was reset) can't be studied, so it is left
+    out of both counts: a deck whose only unseen card is suspended shows no
+    "new left" line instead of promising a card you can't study.
+    Filtered-deck cards count toward their home deck (odid)."""
     out: dict[int, tuple[int, int]] = {}
     for did, odid, total, new in col.db.all(
-        "select did, odid, count(), coalesce(sum(type = 0), 0) from cards group by did, odid"
+        "select did, odid, count(), coalesce(sum(type = 0), 0) from cards "
+        "where not (type = 0 and queue = -1) group by did, odid"
     ):
         home = int(odid or did)
         n, t = out.get(home, (0, 0))

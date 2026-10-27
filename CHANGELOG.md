@@ -2,6 +2,15 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.3.1] - 2026-10-27
+
+### Changed
+- The sidebar now shows your **profile name** at the top (with its first letter as the avatar) instead of "Anki" over the profile name. To change the name, rename the profile in Anki under File ▸ Switch Profile ▸ Rename.
+
+### Fixed
+- **Clicking a deck's name did nothing** in the deck list, for subdecks and top-level decks alike (clicking elsewhere on the row worked). It now selects the deck.
+- **"N new left" no longer counts suspended new cards.** A deck whose only unseen card is suspended (for example a leech that was reset) showed "1 new left" even though nothing could be studied; it now shows just the leech badge.
+
 ## [0.3.0] - 2026-10-24
 
 First public release (AnkiWeb and GitHub).

@@ -156,6 +156,7 @@ class Probe:
         steps.append(("perf", self.step_perf))
         steps.append(("deck_click", self.step_deck_click))
         steps.append(("theme_toggle", self.step_theme_toggle))
+        steps.append(("subdeck", self.step_subdeck))
         steps.append(("stats_inline", self.step_stats_inline))
         steps.append(("diagnostics", self.step_diagnostics))
         steps.append(("goal", self.step_goal))
@@ -871,6 +872,56 @@ class Probe:
 
         self.wait_for("deck_browser_did_render", go, 10_000)
         mw.deckBrowser.refresh()
+
+    def step_subdeck(self, nxt: Next) -> None:
+        """Expanding a deck re-renders Home; the subdeck rows must then be
+        clickable (select) like any other row."""
+        mw = _mw()
+        out: dict[str, Any] = {}
+        self.r["subdeck"] = out
+        state_js = ("(function(){var rows=[].map.call(document.querySelectorAll('tr.deck'),function(r){"
+                    "var c=r.querySelector('a.collapse');return {id:r.id,name:(r.querySelector('a.deck')||{}).textContent,"
+                    "depth:r.dataset.rfDepth,done:!!r.dataset.rfDone,sel:r.classList.contains('rf-selected'),"
+                    "chev:c?c.className:null}});"
+                    "var h=document.querySelector('.rf-hero-scope');"
+                    "return JSON.stringify({rows:rows,hero:h?h.textContent:null});})()")
+
+        def read(key: str, then: Next) -> None:
+            def got(v: Any) -> None:
+                out[key] = json.loads(v) if isinstance(v, str) else v
+                then()
+            self.later(1200, lambda: mw.web.evalWithCallback(state_js, got))
+
+        def start() -> None:
+            read("initial", expand)
+
+        def expand() -> None:
+            mw.web.eval("(function(){var a=document.querySelector('tr.deck a.collapse.rf-closed')||"
+                        "document.querySelector('tr.deck a.collapse');if(a) a.click();})()")
+            read("after_expand", click_child)
+
+        def click_child() -> None:
+            self.shoot("light" if mw.pm.theme() != 2 else "dark", "subdeck_expanded")
+            # a real click on the NAME link of the subdeck (the common way to click a deck)
+            mw.web.eval("(function(){var rows=document.querySelectorAll('tr.deck');"
+                        "var r=[].filter.call(rows,function(x){return (x.dataset.rfDepth||'0')!=='0'})[0];"
+                        "var a=r&&r.querySelector('a.deck'); if(a) a.click();})()")
+            read("after_child_name_click", then_top)
+
+        def then_top() -> None:
+            mw.web.eval("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))")
+            self.later(500, lambda: (mw.web.eval("(function(){var a=document.querySelector('tr.deck a.deck');if(a) a.click();})()"),
+                                     read("after_top_name_click", collapse_back)))
+
+        def collapse_back() -> None:
+            mw.web.eval("(function(){var a=document.querySelector('tr.deck a.collapse.rf-open');if(a) a.click();})()")
+            self.later(1500, nxt)
+
+        if mw.state != "deckBrowser":
+            self.wait_for("deck_browser_did_render", start, 10_000)
+            mw.moveToState("deckBrowser")
+        else:
+            start()
 
     def step_theme_toggle(self, nxt: Next) -> None:
         """The sidebar's Dark/Light mode button flips Anki's theme; a second

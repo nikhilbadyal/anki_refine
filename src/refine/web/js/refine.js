@@ -312,12 +312,14 @@
       if (!/^\d+$/.test(tr.id)) continue;
       (function (id, row, nameLink) {
         if (nameLink) {
-          // the name link would open the overview (Anki's inline handler);
-          // in select mode the row's click handler below selects instead
+          // the name link would open the overview (Anki's inline handler), so
+          // in select mode it selects instead. Stopping the event here also
+          // keeps it from reaching the row's handler below, so select here.
           nameLink.addEventListener("click", function (ev) {
             if (!selectMode() || ev.shiftKey) return;
             ev.preventDefault();
             ev.stopImmediatePropagation();
+            selectDeck(id);
           }, true);
         }
         row.addEventListener("click", function (ev) {

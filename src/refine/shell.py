@@ -92,9 +92,9 @@ def sidebar_html(active: str, profile: str, extras: list[tuple[str, str]]) -> st
     initial = html.escape((profile or "A")[:1].upper())
     return (
         '<nav class="rf-shell" aria-label="Main">'
-        f'<div class="rf-brand"><div class="rf-brand-mark" aria-hidden="true">A</div>'
-        f'<div class="rf-brand-text"><span class="rf-brand-name">Anki</span>'
-        f'<span class="rf-brand-profile" title="Profile">{html.escape(profile or "")}</span></div>'
+        f'<div class="rf-brand"><div class="rf-brand-mark" aria-hidden="true">{initial}</div>'
+        f'<div class="rf-brand-text"><span class="rf-brand-name" title="Profile">{html.escape(profile or "Anki")}</span>'
+        f'<span class="rf-brand-profile">Anki</span></div>'
         f'<span class="rf-brand-initial" aria-hidden="true">{initial}</span></div>'
         f'<div class="rf-nav">{"".join(items)}</div>'
         f"{extra}"

@@ -11,6 +11,17 @@ class Sidebar(unittest.TestCase):
         self.assertIn("Light mode", out)
         self.assertLess(out.index("rf-theme-toggle"), out.index("rf-sync"))
 
+    def test_profile_name_is_the_brand(self):
+        out = shell.sidebar_html("decks", "Shreyansh", [])
+        self.assertIn('class="rf-brand-name" title="Profile">Shreyansh<', out)
+        self.assertIn('class="rf-brand-mark" aria-hidden="true">S<', out)
+        self.assertIn('class="rf-brand-profile">Anki<', out)
+
+    def test_profile_name_is_escaped_and_defaults(self):
+        self.assertIn(">&lt;b&gt;<", shell.sidebar_html("decks", "<b>", []))
+        out = shell.sidebar_html("decks", "", [])
+        self.assertIn('class="rf-brand-name" title="Profile">Anki<', out)
+
     def test_active_item(self):
         out = shell.sidebar_html("stats", "", [])
         self.assertEqual(out.count('aria-current="page"'), 1)
