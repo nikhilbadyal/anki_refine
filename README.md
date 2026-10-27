@@ -67,8 +67,8 @@ If updating Refine shows `PermissionError: Access is denied … user_files`, tha
 1. Download `refine-0.3.2.ankiaddon` (or newer) from the [latest release](https://github.com/shreyanshsinghks/anki_refine/releases/latest) and close Anki completely.
 2. In PowerShell (change the path if your download isn't in Downloads):
    ```powershell
-   Copy-Item "$env:USERPROFILE\Downloadsefine-0.3.2.ankiaddon" "$env:TEMPefine.zip"
-   Expand-Archive "$env:TEMPefine.zip" -DestinationPath "$env:APPDATA\Anki2ddons21q6260025" -Force
+   Copy-Item "$env:USERPROFILE\Downloads\refine-0.3.2.ankiaddon" "$env:TEMP\refine.zip"
+   Expand-Archive "$env:TEMP\refine.zip" -DestinationPath "$env:APPDATA\Anki2\addons21\1616260025" -Force
    ```
 3. Start Anki; **Tools ▸ Add-ons** should list Refine 0.3.2.
 
