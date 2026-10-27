@@ -2,6 +2,11 @@
 
 All notable changes to Refine are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = beta).
 
+## [0.3.2] - 2026-10-27
+
+### Fixed
+- **Updating from AnkiWeb failed on Windows** with "PermissionError: Access is denied … user_files … files_backup". Refine kept its log file open, and Windows won't let Anki rename the add-on's `user_files` folder while a file in it is open. The log file is now opened only while a line is written. If you are on 0.3.0 or 0.3.1, see the README ("Updating from 0.3.0 or 0.3.1") for the one-time workaround.
+
 ## [0.3.1] - 2026-10-27
 
 ### Changed

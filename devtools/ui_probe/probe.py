@@ -157,6 +157,7 @@ class Probe:
         steps.append(("deck_click", self.step_deck_click))
         steps.append(("theme_toggle", self.step_theme_toggle))
         steps.append(("subdeck", self.step_subdeck))
+        steps.append(("addon_update", self.step_addon_update))
         steps.append(("stats_inline", self.step_stats_inline))
         steps.append(("diagnostics", self.step_diagnostics))
         steps.append(("goal", self.step_goal))
@@ -872,6 +873,31 @@ class Probe:
 
         self.wait_for("deck_browser_did_render", go, 10_000)
         mw.deckBrowser.refresh()
+
+    def step_addon_update(self, nxt: Next) -> None:
+        """Anki updates an add-on by renaming its user_files folder (Windows
+        fails if any file inside is held open). Run Anki's own backup and
+        restore steps against the running add-on."""
+        mw = _mw()
+        out: dict[str, Any] = {}
+        self.r["addon_update"] = out
+        am = mw.addonManager
+        pkg = self.refine_pkg
+        out["package"] = pkg
+        try:
+            if self.ctx is not None:
+                self.ctx.log.info("probe: before update test")
+            am.backupUserFiles(pkg)
+            out["backup"] = "ok"
+            if self.ctx is not None:
+                self.ctx.log.info("probe: logging while the folder is renamed")
+            am.restoreUserFiles(pkg)
+            out["restore"] = "ok"
+            if self.ctx is not None:
+                self.ctx.log.info("probe: after update test")
+        except Exception as e:
+            out["error"] = repr(e)
+        nxt()
 
     def step_subdeck(self, nxt: Next) -> None:
         """Expanding a deck re-renders Home; the subdeck rows must then be

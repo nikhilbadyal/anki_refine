@@ -53,6 +53,16 @@ Refine is an add-on for Anki Desktop that gives the home screen, deck overview, 
 2. In Anki: **Tools ▸ Add-ons ▸ Install from file…** and pick the file.
 3. Restart Anki.
 
+### Updating from 0.3.0 or 0.3.1
+
+Those two versions keep a log file open, which makes Anki's update fail on Windows with `PermissionError … user_files … files_backup`. Do this once:
+
+1. **Tools ▸ Add-ons**, select Refine, click **Toggle Enabled** (it shows as disabled), then restart Anki.
+2. **Tools ▸ Add-ons ▸ Check for Updates** and update Refine (or install the new `.ankiaddon` file).
+3. Select Refine again, click **Toggle Enabled**, and restart Anki.
+
+Your Refine settings are kept. From 0.3.2 on, updates work normally.
+
 ## Settings
 
 Open **Tools ▸ Refine ▸ Settings…** to choose the accent colour and density, switch screens and home panels on or off, and reset to defaults. Advanced users can edit the same values under **Tools ▸ Add-ons ▸ Refine ▸ Config**; every key is described there.

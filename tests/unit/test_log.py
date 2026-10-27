@@ -35,6 +35,31 @@ class LogTests(unittest.TestCase):
             self.assertIn("hello there", L.recent(log_dir))
             self.tearDown()
 
+    def test_folder_can_be_renamed_while_logging(self):
+        """Anki updates an add-on by renaming its user_files folder; on
+        Windows that fails if the log file is held open (a real bug in 0.3.0)."""
+        with tempfile.TemporaryDirectory() as d:
+            user_files = Path(d) / "user_files"
+            lg = L.setup(user_files / "logs")
+            lg.info("first")
+            lg.warning("second")
+            user_files.rename(Path(d) / "files_backup")  # PermissionError if the file is open
+            lg.info("third")  # logging keeps working after the folder is gone/back
+            (Path(d) / "files_backup").rename(user_files)
+            lg.info("fourth")
+            text = L.recent(user_files / "logs")
+            self.assertIn("first", text)
+            self.assertIn("fourth", text)
+
+    def test_rotation_still_works(self):
+        with tempfile.TemporaryDirectory() as d:
+            lg = L.setup(Path(d) / "logs")
+            for h in lg.handlers:
+                h.maxBytes = 500
+            for i in range(40):
+                lg.info("line %d %s", i, "x" * 40)
+            self.assertTrue((Path(d) / "logs" / "refine.log.1").exists())
+
     def test_none_gives_null_handler(self):
         lg = L.setup(None)
         L.setup(None)
