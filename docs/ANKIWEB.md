@@ -59,3 +59,11 @@ Paste the HTML below. The images load from the GitHub repository. Each `src` nam
 
 Source code, changelog and bug reports: <a href="https://github.com/shreyanshsinghks/anki_refine">github.com/shreyanshsinghks/anki_refine</a> (AGPL-3.0).
 ```
+
+## Note for the description (updating from 0.3.0 / 0.3.1)
+
+Add this line under Compatibility, since the first update from those versions needs a workaround on Windows:
+
+```html
+<b>Updating from 0.3.0 or 0.3.1 on Windows?</b> If the update shows "Access is denied", disable Refine in Tools > Add-ons (Toggle Enabled), restart Anki, update, then enable it again. Fixed from 0.3.2 on. Details: <a href="https://github.com/shreyanshsinghks/anki_refine#updating-from-030-or-031-windows-one-time-only">github.com/shreyanshsinghks/anki_refine</a>
+```

@@ -53,15 +53,26 @@ Refine is an add-on for Anki Desktop that gives the home screen, deck overview, 
 2. In Anki: **Tools ▸ Add-ons ▸ Install from file…** and pick the file.
 3. Restart Anki.
 
-### Updating from 0.3.0 or 0.3.1
+### Updating from 0.3.0 or 0.3.1 (Windows, one time only)
 
-Those two versions keep a log file open, which makes Anki's update fail on Windows with `PermissionError … user_files … files_backup`. Do this once:
+If updating Refine shows `PermissionError: Access is denied … user_files`, that is a bug in those two versions: they keep a log file open, which blocks Anki's update. It is fixed from 0.3.2 on, so you only need to do this once. Your Refine settings are kept.
 
-1. **Tools ▸ Add-ons**, select Refine, click **Toggle Enabled** (it shows as disabled), then restart Anki.
-2. **Tools ▸ Add-ons ▸ Check for Updates** and update Refine (or install the new `.ankiaddon` file).
-3. Select Refine again, click **Toggle Enabled**, and restart Anki.
+**Method 1: switch Refine off, update, switch it back on**
+1. **Tools ▸ Add-ons**, click **Refine**, then **Toggle Enabled** (right-hand column, below Check for Updates; make the window taller if you can't see it). The list should show **Refine (disabled)**.
+2. Close Anki completely and start it again.
+3. **Tools ▸ Add-ons**, check Refine still says "(disabled)", then **Check for Updates** and update Refine.
+4. Click Refine, **Toggle Enabled** again, and restart Anki.
 
-Your Refine settings are kept. From 0.3.2 on, updates work normally.
+**Method 2: install the file with Anki closed**
+1. Download `refine-0.3.2.ankiaddon` (or newer) from the [latest release](https://github.com/shreyanshsinghks/anki_refine/releases/latest) and close Anki completely.
+2. In PowerShell (change the path if your download isn't in Downloads):
+   ```powershell
+   Copy-Item "$env:USERPROFILE\Downloadsefine-0.3.2.ankiaddon" "$env:TEMPefine.zip"
+   Expand-Archive "$env:TEMPefine.zip" -DestinationPath "$env:APPDATA\Anki2ddons21q6260025" -Force
+   ```
+3. Start Anki; **Tools ▸ Add-ons** should list Refine 0.3.2.
+
+Method 2 assumes you installed from AnkiWeb (folder `1616260025`); if you used "Install from file" the folder name differs, so use Method 1.
 
 ## Settings
 
