@@ -37,7 +37,8 @@ class ReviewerSurface(WebSurface):
         rv = cfg.get("reviewer", {})
         return {
             "rf-ease-colors": bool(rv.get("ease_colors", True)),
-            "rf-two-buttons": bool(rv.get("two_buttons", True)),
+            # Default to False so all four stock Anki answer buttons remain visible unless opted in.
+            "rf-two-buttons": bool(rv.get("two_buttons", False)),
         }
 
     def contribute(self, ctx: Any, web_content: Any, context: Any, cfg: dict) -> None:

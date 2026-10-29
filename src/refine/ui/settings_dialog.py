@@ -398,7 +398,8 @@ class _SettingsDialog(QDialog):
                 cb.setChecked(bool(home.get(hid, True)))
                 cb.setEnabled(enabled)
             self._ease.setChecked(bool((cfg.get("reviewer") or {}).get("ease_colors", True)))
-            self._two.setChecked(bool((cfg.get("reviewer") or {}).get("two_buttons", True)))
+            # Default to False to match DEFAULTS (all four buttons visible by default)
+            self._two.setChecked(bool((cfg.get("reviewer") or {}).get("two_buttons", False)))
             self._goal.setValue(int(cfg.get("daily_goal", 0) or 0))
             for value, rb in self._motion.items():
                 rb.setChecked(cfg.get("motion", "smooth") == value)

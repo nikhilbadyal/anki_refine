@@ -28,7 +28,9 @@ DEFAULTS: Dict[str, Any] = {
     "accent": "jade",
     "density": "comfortable",
     "surfaces": {s: True for s in SURFACE_IDS},
-    "reviewer": {"ease_colors": True, "two_buttons": True},
+    # Show all four buttons (Again, Hard, Good, Easy) by default to match stock Anki;
+    # users can opt in to two-button mode (Again/Good) in settings.
+    "reviewer": {"ease_colors": True, "two_buttons": False},
     "home": {k: True for k in HOME_IDS},
     "cards": {k: False for k in CARD_IDS},
     # cards per day for the Today panel; 0 = no goal
