@@ -45,6 +45,10 @@ class HomeStats:
     best_streak: int = 0
     forecast: list[int] = field(default_factory=list)  # today .. +6
     avg_ms: float = 0.0
+    # Average reviews per active study day across the history window.
+    daily_avg: int = 0
+    # Percentage of calendar days studied between first recorded review and today.
+    days_learned_pct: int = 0
     # deck id -> (passed, total) review answers in the last RETENTION_DAYS,
     # for the deck itself only (parents are aggregated with the tree)
     retention: dict[int, tuple[int, int]] = field(default_factory=dict)
@@ -106,6 +110,29 @@ def streaks(counts: list[int]) -> tuple[int, int]:
         cur += 1
         i -= 1
     return cur, best
+
+
+def activity_summary(counts: list[int]) -> tuple[int, int]:
+    """(daily_avg, days_learned_pct).
+    Daily average is reviews per active day (days with > 0 reviews).
+    Days learned is the percentage of days studied between the user's first
+    recorded study day and today, matching Review Heatmap's standard metrics.
+    """
+    # Active days are those where the user completed at least one review.
+    active_indices = [i for i, n in enumerate(counts) if n > 0]
+    if not active_indices:
+        return 0, 0
+    days_learned = len(active_indices)
+    first_idx = active_indices[0]
+    last_idx = len(counts) - 1
+    # Total calendar days between first study activity and today (inclusive).
+    total_days = max(1, last_idx - first_idx + 1)
+    total_reviews = sum(counts)
+    # Average cards per active study day; rounded to integer like Review Heatmap.
+    daily_avg = round(total_reviews / days_learned)
+    # Proportion of days studied since starting reviews.
+    days_learned_pct = round(100 * days_learned / total_days)
+    return daily_avg, days_learned_pct
 
 
 def forecast(col: Any, days: int = 7) -> list[int]:
@@ -266,6 +293,7 @@ def collect(col: Any) -> HomeStats:
     long = daily_counts(col, STREAK_DAYS)
     s.activity = long[-ACTIVITY_DAYS:]
     s.streak, s.best_streak = streaks(long)
+    s.daily_avg, s.days_learned_pct = activity_summary(long)
     s.forecast = forecast(col)
     s.avg_ms = float(
         col.db.scalar(
@@ -423,18 +451,79 @@ def _day_label(day: datetime.date, offset: int) -> str:
 
 def activity_html(s: HomeStats, today: datetime.date | None = None) -> str:
     today = today or datetime.date.today()
-    peak = max(s.activity) if s.activity else 0
-    last = len(s.activity) - 1
+    # Align the 26-week calendar to fixed Monday..Sunday rows matching the M-S weekday labels.
+    # In Python, date.weekday() maps Monday=0 through Sunday=6.
+    w = today.weekday()
+    cur_monday = today - datetime.timedelta(days=w)
+    # Start on Monday of the 25th week prior to the current week (giving 26 total week columns).
+    start_monday = cur_monday - datetime.timedelta(weeks=25)
+    past_days = (today - start_monday).days + 1
+    future_days = 6 - w
+
+    # Pad counts if s.activity has fewer days (e.g. unit tests or young collections).
+    counts = [0] * max(0, past_days - len(s.activity)) + list(s.activity)
+    counts = counts[-past_days:]
+    peak = max(counts) if counts else 0
+
     cells = []
-    for i, n in enumerate(s.activity):
+    # Render all past days up to and including today.
+    for i, n in enumerate(counts):
         level = 0 if n == 0 or peak == 0 else min(4, max(1, math.ceil(4 * n / peak)))
-        day = today - datetime.timedelta(days=last - i)
-        tip = f'{_day_label(day, i - last)} · {fmt_int(n)} review{"s" if n != 1 else ""}'
+        day = start_monday + datetime.timedelta(days=i)
+        offset = i - (past_days - 1)
+        tip = f'{_day_label(day, offset)} · {fmt_int(n)} review{"s" if n != 1 else ""}'
         cells.append(f'<i class="rf-l{level}" data-rf-tip="{tip}"></i>')
+
+    # Future slots in the current week keep the 7-row CSS grid column complete without showing tiles.
+    for _ in range(future_days):
+        cells.append('<i class="rf-future" aria-hidden="true"></i>')
+
+    # Find the starting week column for each month in the 26-week span.
+    month_labels: list[tuple[int, str]] = []
+    for col in range(26):
+        monday = start_monday + datetime.timedelta(weeks=col)
+        m_day = None
+        for d in range(7):
+            dt = monday + datetime.timedelta(days=d)
+            # Only identify months that have already started on or before today.
+            if dt.day == 1 and dt <= today:
+                m_day = dt
+                break
+        if m_day is not None:
+            # Drop week 0 label if a new month starts within 2 weeks to avoid text collision.
+            if month_labels and (col - month_labels[-1][0] < 3) and month_labels[-1][0] == 0:
+                month_labels.pop()
+            month_labels.append((col, m_day.strftime("%b")))
+        elif col == 0:
+            month_labels.append((0, monday.strftime("%b")))
+
+    month_spans = [
+        f'<span style="grid-column-start:{col + 1};grid-row:1;">{name}</span>'
+        for col, name in month_labels
+    ]
+
+    # Resolve daily average and days learned percentage (fallback to activity_summary on counts if unset).
+    daily_avg = s.daily_avg
+    days_learned_pct = s.days_learned_pct
+    if not daily_avg and not days_learned_pct and counts:
+        daily_avg, days_learned_pct = activity_summary(counts)
+
+    days_header = "".join(f"<span>{d}</span>" for d in ("M", "T", "W", "T", "F", "S", "S"))
+
     return (
+        '<div class="rf-heat-wrap">'
+        f'<div class="rf-heat-body">'
+        f'<div class="rf-heat-days" aria-hidden="true">{days_header}</div>'
         f'<div class="rf-heat" role="img" aria-label="Reviews per day, last 26 weeks">{"".join(cells)}</div>'
-        f'<div class="rf-row rf-muted rf-small"><span>Streak {s.streak} day{"s" if s.streak != 1 else ""}</span>'
-        f"<span>Best {s.best_streak}</span></div>"
+        f"</div>"
+        f'<div class="rf-heat-months" aria-hidden="true">{"".join(month_spans)}</div>'
+        f"</div>"
+        f'<div class="rf-activity-stats rf-small rf-muted">'
+        f'<span>Daily average: <b>{fmt_int(daily_avg)} card{"s" if daily_avg != 1 else ""}</b></span>'
+        f'<span>Days learned: <b>{days_learned_pct}%</b></span>'
+        f'<span>Current streak: <b>{s.streak} day{"s" if s.streak != 1 else ""}</b></span>'
+        f'<span>Longest streak: <b>{s.best_streak} day{"s" if s.best_streak != 1 else ""}</b></span>'
+        f"</div>"
     )
 
 

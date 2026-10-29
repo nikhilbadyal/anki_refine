@@ -167,14 +167,46 @@ class Panels(unittest.TestCase):
         self.assertIn('class="rf-l2" data-rf-tip="Tue, Mar 3 · 26 reviews"', out)
         self.assertIn('class="rf-l4" data-rf-tip="Today · 100 reviews"', out)
         self.assertIn('data-rf-tip="Yesterday · 75 reviews"', out)
-        self.assertIn("Streak 1 day<", out)
-        self.assertIn("Best 3", out)
+        self.assertIn("Current streak: <b>1 day</b>", out)
+        self.assertIn("Longest streak: <b>3 days</b>", out)
+        self.assertIn("Daily average:", out)
+        self.assertIn("Days learned:", out)
+        self.assertIn("rf-heat-days", out)
+        self.assertIn("rf-heat-months", out)
 
     def test_activity_empty(self):
         out = home.activity_html(HomeStats(activity=[0, 0], streak=2))
-        self.assertEqual(out.count('class="rf-l0"'), 2)
-        self.assertIn("Streak 2 days", out)
-        self.assertIn("rf-heat", home.activity_html(HomeStats()))
+        self.assertIn("rf-heat", out)
+        self.assertIn("Current streak: <b>2 days</b>", out)
+        # 182 total cells in 26 weeks: past days are rf-l0, remaining days in current week are rf-future
+        l0_count = out.count('class="rf-l0"')
+        future_count = out.count('class="rf-future"')
+        self.assertEqual(l0_count + future_count, 182)
+
+    def test_activity_summary(self):
+        # Empty counts
+        self.assertEqual(home.activity_summary([]), (0, 0))
+        self.assertEqual(home.activity_summary([0, 0, 0]), (0, 0))
+        # 1 active day with 50 cards
+        self.assertEqual(home.activity_summary([0, 0, 50]), (50, 100))
+        # 4 days total span, 2 active days with 10 and 30 reviews -> avg 20, learned 50%
+        self.assertEqual(home.activity_summary([10, 0, 0, 30]), (20, 50))
+
+    def test_activity_weekday_alignment(self):
+        # Test every possible weekday (Monday through Sunday) for alignment
+        base = datetime.date(2026, 10, 26)  # Monday
+        for offset in range(7):
+            today = base + datetime.timedelta(days=offset)
+            out = home.activity_html(HomeStats(activity=[5] * 10), today)
+            future_count = out.count('class="rf-future"')
+            past_count = out.count('data-rf-tip="')
+            # Future slots complete the 7-day week (6 - weekday)
+            self.assertEqual(future_count, 6 - today.weekday())
+            # Total cells in 26 columns x 7 rows must strictly be 182
+            self.assertEqual(future_count + past_count, 182)
+            # Weekday labels header must be present
+            for d in ("<span>M</span>", "<span>T</span>", "<span>W</span>", "<span>F</span>", "<span>S</span>"):
+                self.assertIn(d, out)
 
     def test_pace(self):
         self.assertEqual(home.pace_text(Totals(), HomeStats(avg_ms=5000)), "")
@@ -226,6 +258,8 @@ class Queries(unittest.TestCase):
         self.assertEqual(len(s.activity), home.ACTIVITY_DAYS)
         self.assertEqual(s.activity[-3:], [1, 1, 3])
         self.assertEqual((s.streak, s.best_streak), (3, 3))
+        self.assertEqual(s.daily_avg, 2)
+        self.assertEqual(s.days_learned_pct, 100)
         self.assertEqual(s.forecast[0], 3)
         self.assertEqual(s.avg_ms, 4500.0)
         # card-count queries exclude Manual/Rescheduled entries; the review-
